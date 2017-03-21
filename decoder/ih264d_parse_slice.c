@@ -1123,7 +1123,7 @@ WORD32 ih264d_parse_decode_slice(UWORD8 u1_is_idr_slice,
 
     COPYTHECONTEXT("SH: frame_num", u2_frame_num);
 //    H264_DEC_DEBUG_PRINT("Second field: %d frame num: %d prv_frame_num: %d \n", ps_dec->u1_second_field, u2_frame_num, ps_dec->u2_prv_frame_num);
-    if(!ps_dec->u1_first_slice_in_stream && (ps_dec->u4_first_slice_in_pic == 2))
+    if(!ps_dec->u1_first_slice_in_stream && ps_dec->u4_first_slice_in_pic)
     {
         pocstruct_t *ps_prev_poc = &ps_dec->s_prev_pic_poc;
         pocstruct_t *ps_cur_poc = &ps_dec->s_cur_pic_poc;
@@ -1263,7 +1263,7 @@ WORD32 ih264d_parse_decode_slice(UWORD8 u1_is_idr_slice,
     i1_is_end_of_poc = 1;
     ps_dec->ps_dec_err_status->u1_err_flag &= MASK_REJECT_CUR_PIC;
 
-    if(ps_dec->u4_first_slice_in_pic != 2)
+    if(ps_dec->u4_first_slice_in_pic == 0)
     {
         i1_is_end_of_poc = ih264d_is_end_of_pic(u2_frame_num, u1_nal_ref_idc,
                                             &s_tmp_poc, &ps_dec->s_cur_pic_poc,
