@@ -72,6 +72,7 @@
 #include "ih264d_parse_islice.h"
 #define RET_LAST_SKIP  0x80000000
 
+WORD32 check_app_out_buf_size(dec_struct_t *ps_dec);
 /*!
  **************************************************************************
  * \if Function name : ih264d_form_pred_weight_matrix \endif
@@ -180,6 +181,10 @@ WORD32 ih264d_start_of_pic(dec_struct_t *ps_dec,
     WORD32 ret;
 
     H264_MUTEX_LOCK(&ps_dec->process_disp_mutex);
+
+    /* check output buffer size given by the application */
+    if(check_app_out_buf_size(ps_dec) != IV_SUCCESS)
+        return IVD_DISP_FRM_ZERO_OP_BUF_SIZE;
 
     ps_prev_poc->i4_pic_order_cnt_lsb = ps_cur_poc->i4_pic_order_cnt_lsb;
     ps_prev_poc->i4_pic_order_cnt_msb = ps_cur_poc->i4_pic_order_cnt_msb;
@@ -436,11 +441,23 @@ WORD32 ih264d_start_of_pic(dec_struct_t *ps_dec,
         ps_dec->au1_pic_buf_ref_flag[cur_pic_buf_id] = 0;
 
         {
-            /*make first entry of list0 point to cur pic,so that if first Islice is in error, ref pic struct will have valid entries*/
+            /*make first entry of list0 and list1 point to cur pic,
+             *so that if first slice is in error, ref pic struct will have valid entries*/
             ps_dec->ps_ref_pic_buf_lx[0] = ps_dec->ps_dpb_mgr->ps_init_dpb[0];
+            ps_dec->ps_ref_pic_buf_lx[1] = ps_dec->ps_dpb_mgr->ps_init_dpb[1];
             *(ps_dec->ps_dpb_mgr->ps_init_dpb[0][0]) = *ps_cur_pic;
             /* Initialize for field reference as well */
             *(ps_dec->ps_dpb_mgr->ps_init_dpb[0][MAX_REF_BUFS]) = *ps_cur_pic;
+
+            *(ps_dec->ps_dpb_mgr->ps_mod_dpb[0][0]) = *ps_cur_pic;
+            /* Initialize for field reference as well */
+            *(ps_dec->ps_dpb_mgr->ps_mod_dpb[0][MAX_REF_BUFS]) = *ps_cur_pic;
+            *(ps_dec->ps_dpb_mgr->ps_init_dpb[1][0]) = *ps_cur_pic;
+            /* Initialize for field reference as well */
+            *(ps_dec->ps_dpb_mgr->ps_init_dpb[1][MAX_REF_BUFS]) = *ps_cur_pic;
+            *(ps_dec->ps_dpb_mgr->ps_mod_dpb[1][0]) = *ps_cur_pic;
+            /* Initialize for field reference as well */
+            *(ps_dec->ps_dpb_mgr->ps_mod_dpb[1][MAX_REF_BUFS]) = *ps_cur_pic;
         }
 
         if(!ps_dec->ps_cur_pic)
@@ -1785,10 +1802,8 @@ WORD32 ih264d_parse_decode_slice(UWORD8 u1_is_idr_slice,
             num_entries = 1;
         }
         num_entries = ((2 * num_entries) + 1);
-        if(BASE_PROFILE_IDC != ps_dec->ps_cur_sps->u1_profile_idc)
-        {
-            num_entries *= 2;
-        }
+        num_entries *= 2;
+
 
         size = num_entries * sizeof(void *);
         size += PAD_MAP_IDX_POC * sizeof(void *);
