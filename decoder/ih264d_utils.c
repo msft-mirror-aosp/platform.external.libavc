@@ -676,11 +676,7 @@ WORD32 ih264d_init_dec_mb_grp(dec_struct_t *ps_dec)
     dec_seq_params_t *ps_seq = ps_dec->ps_cur_sps;
     UWORD8 u1_frm = ps_seq->u1_frame_mbs_only_flag;
 
-    ps_dec->u1_recon_mb_grp = PARSE_MB_GROUP_4;
-
-    //NMB set to width in MBs for non-mbaff cases
-    if(0 == ps_seq->u1_mb_aff_flag)
-        ps_dec->u1_recon_mb_grp = ps_dec->u2_frm_wd_in_mbs;
+    ps_dec->u1_recon_mb_grp = ps_dec->u2_frm_wd_in_mbs << ps_seq->u1_mb_aff_flag;
 
     ps_dec->u1_recon_mb_grp_pair = ps_dec->u1_recon_mb_grp >> 1;
 
@@ -1561,7 +1557,6 @@ WORD32 ih264d_decode_gaps_in_frame_num(dec_struct_t *ps_dec,
 
     ps_cur_slice = ps_dec->ps_cur_slice;
     ps_pic_params = ps_dec->ps_cur_pps;
-    ps_cur_slice->u1_field_pic_flag = 0;
 
     i4_frame_gaps = 0;
     ps_dpb_mgr = ps_dec->ps_dpb_mgr;
@@ -1878,6 +1873,7 @@ WORD16 ih264d_allocate_dynamic_bufs(dec_struct_t * ps_dec)
     size = sizeof(parse_pmbarams_t) * (ps_dec->u1_recon_mb_grp);
     pv_buf = ps_dec->pf_aligned_alloc(pv_mem_ctxt, 128, size);
     RETURN_IF((NULL == pv_buf), IV_FAIL);
+    memset(pv_buf, 0, size);
     ps_dec->ps_parse_mb_data = pv_buf;
 
     size = sizeof(parse_part_params_t)
@@ -1948,8 +1944,9 @@ WORD16 ih264d_allocate_dynamic_bufs(dec_struct_t * ps_dec)
 
     if(ps_dec->u1_separate_parse)
     {
+        /* Needs one extra row of info, to hold top row data */
         size = sizeof(mb_neigbour_params_t)
-                        * 2 * ((u4_wd_mbs + 2) * u4_ht_mbs);
+                        * 2 * ((u4_wd_mbs + 2) * (u4_ht_mbs + 1));
     }
     else
     {
@@ -1986,10 +1983,7 @@ WORD16 ih264d_allocate_dynamic_bufs(dec_struct_t * ps_dec)
         num_entries = 1;
     }
     num_entries = ((2 * num_entries) + 1);
-    if(BASE_PROFILE_IDC != ps_dec->ps_cur_sps->u1_profile_idc)
-    {
-        num_entries *= 2;
-    }
+    num_entries *= 2;
 
     size = num_entries * sizeof(void *);
     size += PAD_MAP_IDX_POC * sizeof(void *);
@@ -2006,10 +2000,7 @@ WORD16 ih264d_allocate_dynamic_bufs(dec_struct_t * ps_dec)
 
     /* Allocate memory for packed pred info */
     num_entries = u4_total_mbs;
-    if(1 == ps_dec->ps_cur_sps->u1_num_ref_frames)
-        num_entries *= 16;
-    else
-        num_entries *= 16 * 2;
+    num_entries *= 16 * 2;
 
     size = sizeof(pred_info_pkd_t) * num_entries;
     pv_buf = ps_dec->pf_aligned_alloc(pv_mem_ctxt, 128, size);
