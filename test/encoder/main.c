@@ -29,10 +29,6 @@
 #include <assert.h>
 #include <string.h>
 
-#ifndef IOS
-#include <malloc.h>
-#endif
-
 #ifdef WINDOWS_TIMER
 #include "windows.h"
 #else
@@ -277,7 +273,12 @@ void ih264a_aligned_free(void *pv_buf)
 
 void * ih264a_aligned_malloc(WORD32 alignment, WORD32 size)
 {
-    return memalign(alignment, size);
+    void *buf = NULL;
+    if (0 != posix_memalign(&buf, alignment, size))
+    {
+        return NULL;
+    }
+    return buf;
 }
 
 void ih264a_aligned_free(void *pv_buf)
@@ -846,12 +847,14 @@ void read_cfg_file(app_ctxt_t *ps_app_ctxt, FILE *fp_cfg)
 
     while(0 == (feof(fp_cfg)))
     {
+        int ret;
         line[0] = '\0';
-        fgets(line, STRLENGTH, fp_cfg);
+        if(NULL == fgets(line, sizeof(line), fp_cfg))
+            break;
         argument[0] = '\0';
         /* Reading Input File Name */
-        sscanf(line, "%s %s %s", argument, value, description);
-        if(argument[0] == '\0')
+        ret = sscanf(line, "%s %s %s", argument, value, description);
+        if(ret < 2)
             continue;
 
         parse_argument(ps_app_ctxt, argument, value);
