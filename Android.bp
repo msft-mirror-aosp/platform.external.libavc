@@ -235,17 +235,18 @@ cc_library_static {
     },
 
     sanitize: {
-    	cfi: true,
-        diag: {
-            cfi: true,
-        },
-        blacklist: "cfi_blacklist.txt",
+        integer_overflow: true,
+        misc_undefined: ["bounds"],
+        // Enable CFI if this becomes a shared library.
+        // cfi: true,
+        blacklist: "libavc_blacklist.txt",
     },
 }
 
 cc_library_static {
     name: "libavcenc",
     vendor_available: true,
+    host_supported: true,
     shared_libs: ["liblog", "libcutils",],
 
     cflags: [
@@ -504,11 +505,11 @@ cc_library_static {
     },
 
     sanitize: {
-    	cfi: true,
-        diag: {
-            cfi: true,
-        },
-        blacklist: "cfi_blacklist.txt",
+        integer_overflow: true,
+        misc_undefined: ["bounds"],
+        // Enable CFI if this becomes a shared library.
+        // cfi: true,
+        blacklist: "libavc_blacklist.txt",
     },
 }
 
