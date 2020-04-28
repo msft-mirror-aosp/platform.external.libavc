@@ -1,7 +1,6 @@
 cc_library_static {
     name: "libavcdec",
     vendor_available: true,
-    host_supported:true,
     shared_libs: ["liblog", "libcutils",],
 
     cflags: [
@@ -246,7 +245,6 @@ cc_library_static {
 cc_library_static {
     name: "libavcenc",
     vendor_available: true,
-    host_supported: true,
     shared_libs: ["liblog", "libcutils",],
 
     cflags: [
@@ -322,7 +320,6 @@ cc_library_static {
         "encoder/irc_vbr_str_prms.c",
         "encoder/ime.c",
         "encoder/ime_distortion_metrics.c",
-        "encoder/ih264e_sei.c",
     ],
 
     arch: {

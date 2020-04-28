@@ -190,7 +190,6 @@ typedef struct pic_buffer_t
     /* ! */
     UWORD32 u4_ts;
     UWORD8 u1_pic_struct;/* Refer to SEI table D-1 */
-    sei s_sei_pic;
 
 } pic_buffer_t;
 
@@ -1006,11 +1005,6 @@ typedef struct _DecStruct
     UWORD8 *pu1_temp_mc_buffer;
 
     struct _sei *ps_sei;
-    struct _sei *ps_sei_parse;
-    struct _sei s_sei_export;
-
-    void *pv_disp_sei_params;
-
     UWORD8 u1_pic_struct_copy;
     /* Variables required for cropping */
     UWORD16 u2_disp_width;

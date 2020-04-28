@@ -30,7 +30,6 @@
 
 /* User include files */
 #include "ih264_typedefs.h"
-#include "ih264_defs.h"
 #include "iv2.h"
 #include "ive2.h"
 #include "ih264e.h"

@@ -85,7 +85,7 @@
 * Concatenates various strings to form a version string
 *******************************************************************************
 */
-#ifdef ANDROID
+#ifdef __ANDROID__
 #define VERSION(version_string, codec_name, codec_release_type, codec_release_ver, codec_vendor)    \
     snprintf(version_string, MAX_STRLEN,                                                            \
              "@(#)Id:%s_%s Ver:%s Released by %s",                                                  \
