@@ -35,6 +35,7 @@
 #include "ih264_typedefs.h"
 #include "ih264_macros.h"
 #include "ih264_platform_macros.h"
+#include "ih264_defs.h"
 #include "ih264d_bitstrm.h"
 #include "ih264d_structs.h"
 #include "ih264d_parse_cavlc.h"
@@ -363,20 +364,21 @@ WORD32 ih264d_parse_pps(dec_struct_t * ps_dec, dec_bit_stream_t * ps_bitstrm)
     if(ps_pps->u1_wted_bipred_idc > MAX_WEIGHT_BIPRED_IDC)
         return ERROR_INV_SPS_PPS_T;
 
-    i_temp = 26 + ih264d_sev(pu4_bitstrm_ofst, pu4_bitstrm_buf);
+    WORD64 i8_temp = (WORD64)26
+                        + ih264d_sev(pu4_bitstrm_ofst, pu4_bitstrm_buf);
 
-    if((i_temp < 0) || (i_temp > 51))
+    if((i8_temp < MIN_H264_QP) || (i8_temp > MAX_H264_QP))
         return ERROR_INV_RANGE_QP_T;
 
-    ps_pps->u1_pic_init_qp = i_temp;
+    ps_pps->u1_pic_init_qp = i8_temp;
     COPYTHECONTEXT("PPS: pic_init_qp_minus26",ps_pps->u1_pic_init_qp - 26);
 
-    i_temp = 26 + ih264d_sev(pu4_bitstrm_ofst, pu4_bitstrm_buf);
+    i8_temp = (WORD64)26 + ih264d_sev(pu4_bitstrm_ofst, pu4_bitstrm_buf);
 
-    if((i_temp < 0) || (i_temp > 51))
+    if((i8_temp < MIN_H264_QP) || (i8_temp > MAX_H264_QP))
         return ERROR_INV_RANGE_QP_T;
 
-    ps_pps->u1_pic_init_qs = i_temp;
+    ps_pps->u1_pic_init_qs = i8_temp;
     COPYTHECONTEXT("PPS: pic_init_qs_minus26",ps_pps->u1_pic_init_qs - 26);
 
     i_temp = ih264d_sev(pu4_bitstrm_ofst, pu4_bitstrm_buf);
@@ -1091,6 +1093,23 @@ WORD32 ih264d_parse_sps(dec_struct_t *ps_dec, dec_bit_stream_t *ps_bitstrm)
     /*--------------------------------------------------------------------*/
     /* All initializations to ps_dec are beyond this point                */
     /*--------------------------------------------------------------------*/
+    {
+        WORD32 reorder_depth = ih264d_get_dpb_size(ps_seq);
+        if((1 == ps_seq->u1_vui_parameters_present_flag) &&
+           (1 == ps_seq->s_vui.u1_bitstream_restriction_flag))
+        {
+            reorder_depth = ps_seq->s_vui.u4_num_reorder_frames + 1;
+        }
+
+        if (reorder_depth > H264_MAX_REF_PICS)
+        {
+            return ERROR_INV_SPS_PPS_T;
+        }
+
+        if(ps_seq->u1_frame_mbs_only_flag != 1)
+            reorder_depth *= 2;
+        ps_dec->i4_reorder_depth = reorder_depth + DISPLAY_LATENCY;
+    }
     ps_dec->u2_disp_height = i4_cropped_ht;
     ps_dec->u2_disp_width = i4_cropped_wd;
 
