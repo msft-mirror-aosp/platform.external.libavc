@@ -509,6 +509,7 @@ WORD32 ih264d_end_of_pic_processing(dec_struct_t *ps_dec)
                                       ps_dec->ps_cur_pic,
                                       ps_dec->u1_pic_buf_id,
                                       ps_cur_slice->u2_frame_num);
+                ps_dec->ps_dpb_mgr->u1_max_lt_frame_idx = NO_LONG_TERM_INDICIES;
             }
             else
             {
@@ -527,7 +528,7 @@ WORD32 ih264d_end_of_pic_processing(dec_struct_t *ps_dec)
                                     ps_cur_slice->u2_frame_num, 0,
                                     ps_cur_slice->u1_field_pic_flag);
 
-                    ps_dec->ps_dpb_mgr->u1_max_lt_pic_idx_plus1 = 1;
+                    ps_dec->ps_dpb_mgr->u1_max_lt_frame_idx = 0;
                 }
             }
         }
@@ -769,7 +770,6 @@ WORD32 ih264d_init_pic(dec_struct_t *ps_dec,
             else
                 ps_dec->i4_display_delay = ps_seq->s_vui.u4_num_reorder_frames * 2 + 2;
         }
-        ps_dec->i4_reorder_depth = ps_dec->i4_display_delay;
 
         if(IVD_DECODE_FRAME_OUT == ps_dec->e_frm_out_mode)
             ps_dec->i4_display_delay = 0;
