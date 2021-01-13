@@ -463,7 +463,7 @@ WORD32 ih264d_parse_pps(dec_struct_t * ps_dec, dec_bit_stream_t * ps_bitstrm)
 
     /* In case bitstream read has exceeded the filled size, then
        return an error */
-    if(ps_bitstrm->u4_ofst > ps_bitstrm->u4_max_ofst + 8)
+    if(EXCEED_OFFSET(ps_bitstrm))
     {
         return ERROR_INV_SPS_PPS_T;
     }
@@ -1093,7 +1093,7 @@ WORD32 ih264d_parse_sps(dec_struct_t *ps_dec, dec_bit_stream_t *ps_bitstrm)
 
     /* In case bitstream read has exceeded the filled size, then
      return an error */
-    if (ps_bitstrm->u4_ofst > ps_bitstrm->u4_max_ofst)
+    if (EXCEED_OFFSET(ps_bitstrm))
     {
         return ERROR_INV_SPS_PPS_T;
     }
@@ -1101,6 +1101,23 @@ WORD32 ih264d_parse_sps(dec_struct_t *ps_dec, dec_bit_stream_t *ps_bitstrm)
     /*--------------------------------------------------------------------*/
     /* All initializations to ps_dec are beyond this point                */
     /*--------------------------------------------------------------------*/
+    {
+        WORD32 reorder_depth = ih264d_get_dpb_size(ps_seq);
+        if((1 == ps_seq->u1_vui_parameters_present_flag) &&
+           (1 == ps_seq->s_vui.u1_bitstream_restriction_flag))
+        {
+            reorder_depth = ps_seq->s_vui.u4_num_reorder_frames + 1;
+        }
+
+        if (reorder_depth > H264_MAX_REF_PICS)
+        {
+            return ERROR_INV_SPS_PPS_T;
+        }
+
+        if(ps_seq->u1_frame_mbs_only_flag != 1)
+            reorder_depth *= 2;
+        ps_dec->i4_reorder_depth = reorder_depth + DISPLAY_LATENCY;
+    }
     ps_dec->u2_disp_height = i4_cropped_ht;
     ps_dec->u2_disp_width = i4_cropped_wd;
 
