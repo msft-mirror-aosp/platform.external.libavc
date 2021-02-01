@@ -228,8 +228,10 @@ cc_library_static {
     sanitize: {
         integer_overflow: true,
         misc_undefined: ["bounds"],
-        // Enable CFI if this becomes a shared library.
-        // cfi: true,
+        cfi: true,
+        config: {
+            cfi_assembly_support: true,
+        },
         blocklist: "libavc_blocklist.txt",
     },
     apex_available: [
@@ -489,8 +491,10 @@ cc_library_static {
     sanitize: {
         integer_overflow: true,
         misc_undefined: ["bounds"],
-        // Enable CFI if this becomes a shared library.
-        // cfi: true,
+        cfi: true,
+        config: {
+            cfi_assembly_support: true,
+        },
         blocklist: "libavc_blocklist.txt",
     },
     apex_available: [
