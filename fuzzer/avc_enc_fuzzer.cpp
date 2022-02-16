@@ -19,7 +19,6 @@
  */
 #include <malloc.h>
 #include <algorithm>
-#include <string.h>
 #include <vector>
 
 #include "ih264_defs.h"
