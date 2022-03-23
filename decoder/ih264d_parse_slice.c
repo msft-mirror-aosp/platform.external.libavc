@@ -1435,23 +1435,6 @@ WORD32 ih264d_parse_decode_slice(UWORD8 u1_is_idr_slice,
         i1_is_end_of_poc = 0;
     }
 
-    /* Increment only if the current slice has atleast 1 more MB */
-    if (ps_dec->u4_first_slice_in_pic == 0 &&
-        (ps_dec->ps_parse_cur_slice->u4_first_mb_in_slice <
-        (UWORD32)(ps_dec->u2_total_mbs_coded >> ps_dec->ps_cur_slice->u1_mbaff_frame_flag)))
-    {
-        ps_dec->ps_parse_cur_slice++;
-        ps_dec->u2_cur_slice_num++;
-        // in the case of single core increment ps_decode_cur_slice
-        if(ps_dec->u1_separate_parse == 0)
-        {
-            ps_dec->ps_decode_cur_slice++;
-        }
-    }
-
-    ps_dec->u1_slice_header_done = 0;
-
-
     if(u1_field_pic_flag)
     {
         ps_dec->u2_prv_frame_num = u2_frame_num;
@@ -1518,6 +1501,22 @@ WORD32 ih264d_parse_decode_slice(UWORD8 u1_is_idr_slice,
             ps_dec->i4_max_poc = 0;
         }
     }
+
+    /* Increment only if the current slice has atleast 1 more MB */
+    if (ps_dec->u4_first_slice_in_pic == 0 &&
+        (ps_dec->ps_parse_cur_slice->u4_first_mb_in_slice <
+        (UWORD32)(ps_dec->u2_total_mbs_coded >> ps_dec->ps_cur_slice->u1_mbaff_frame_flag)))
+    {
+        ps_dec->ps_parse_cur_slice++;
+        ps_dec->u2_cur_slice_num++;
+        // in the case of single core increment ps_decode_cur_slice
+        if(ps_dec->u1_separate_parse == 0)
+        {
+            ps_dec->ps_decode_cur_slice++;
+        }
+    }
+
+    ps_dec->u1_slice_header_done = 0;
 
     /*--------------------------------------------------------------------*/
     /* Copy the values read from the bitstream to the slice header and then*/
@@ -1599,6 +1598,17 @@ WORD32 ih264d_parse_decode_slice(UWORD8 u1_is_idr_slice,
 
                 ps_dec->u4_dec_thread_created = 1;
             }
+#ifdef KEEP_THREADS_ACTIVE
+            ret = ithread_mutex_lock(ps_dec->apv_proc_start_mutex[0]);
+            RETURN_IF((ret != IV_SUCCESS), ret);
+
+            ps_dec->ai4_process_start[0] = PROC_START;
+            ret = ithread_cond_signal(ps_dec->apv_proc_start_condition[0]);
+            RETURN_IF((ret != IV_SUCCESS), ret);
+
+            ret = ithread_mutex_unlock(ps_dec->apv_proc_start_mutex[0]);
+            RETURN_IF((ret != IV_SUCCESS), ret);
+#endif
 
             if((ps_dec->u4_num_cores == 3) &&
                             ((ps_dec->u4_app_disable_deblk_frm == 0) || ps_dec->i1_recon_in_thread3_flag)
@@ -1610,6 +1620,20 @@ WORD32 ih264d_parse_decode_slice(UWORD8 u1_is_idr_slice,
                                (void *)ps_dec);
                 ps_dec->u4_bs_deblk_thread_created = 1;
             }
+#ifdef KEEP_THREADS_ACTIVE
+            if (ps_dec->u4_bs_deblk_thread_created)
+            {
+                ret = ithread_mutex_lock(ps_dec->apv_proc_start_mutex[1]);
+                RETURN_IF((ret != IV_SUCCESS), ret);
+
+                ps_dec->ai4_process_start[1] = PROC_START;
+                ret = ithread_cond_signal(ps_dec->apv_proc_start_condition[1]);
+                RETURN_IF((ret != IV_SUCCESS), ret);
+
+                ret = ithread_mutex_unlock(ps_dec->apv_proc_start_mutex[1]);
+                RETURN_IF((ret != IV_SUCCESS), ret);
+            }
+#endif
         }
 
     }
