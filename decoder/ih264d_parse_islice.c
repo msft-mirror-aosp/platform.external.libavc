@@ -33,10 +33,9 @@
  * \author  NS
  **************************************************************************
  */
-#include <string.h>
-#include "ih264_defs.h"
 #include "ih264d_error_handler.h"
 #include "ih264d_debug.h"
+#include <string.h>
 #include "ih264d_bitstrm.h"
 #include "ih264d_defs.h"
 #include "ih264d_debug.h"
@@ -1400,11 +1399,11 @@ WORD32 ih264d_parse_islice(dec_struct_t *ps_dec,
     /* G050 */
 
     /* Read slice_qp_delta */
-    WORD64 i8_temp = (WORD64)ps_pps->u1_pic_init_qp
-                        + ih264d_sev(pu4_bitstrm_ofst, pu4_bitstrm_buf);
-    if((i8_temp < MIN_H264_QP) || (i8_temp > MAX_H264_QP))
+    i_temp = ps_pps->u1_pic_init_qp
+                    + ih264d_sev(pu4_bitstrm_ofst, pu4_bitstrm_buf);
+    if((i_temp < 0) || (i_temp > 51))
         return ERROR_INV_RANGE_QP_T;
-    ps_slice->u1_slice_qp = i8_temp;
+    ps_slice->u1_slice_qp = i_temp;
     COPYTHECONTEXT("SH: slice_qp_delta",
                     ps_slice->u1_slice_qp - ps_pps->u1_pic_init_qp);
 

@@ -111,13 +111,13 @@ void compute_psnr(app_ctxt_t *ps_app_ctxt, iv_raw_buf_t *ps_buf1, iv_raw_buf_t *
         pu1_buf2 = (UWORD8 *)ps_buf2->apv_bufs[comp];
         wd = ps_buf1->au4_wd[comp];
         ht = ps_buf1->au4_ht[comp];
-        strd1 = ps_buf1->au4_strd[comp] - ps_buf1->au4_wd[comp];
-        strd2 = ps_buf2->au4_strd[comp] - ps_buf2->au4_wd[comp];
+        strd1 = ps_buf1->au4_strd[comp];
+        strd2 = ps_buf2->au4_strd[comp];
         incr1 = 1;
         incr2 = 1;
 
         if((IV_YUV_420SP_UV == ps_buf1->e_color_fmt)
-                        || (IV_YUV_420SP_VU == ps_buf1->e_color_fmt))
+                        || (IV_YUV_420SP_UV == ps_buf1->e_color_fmt))
         {
             switch(comp)
             {
@@ -130,8 +130,6 @@ void compute_psnr(app_ctxt_t *ps_app_ctxt, iv_raw_buf_t *ps_buf1, iv_raw_buf_t *
                     else
                         pu1_buf1 = (UWORD8 *)ps_buf1->apv_bufs[1] + 1;
                     incr1 = 2;
-                    wd = ps_buf1->au4_wd[0] >> 1;
-                    ht = ps_buf1->au4_ht[0] >> 1;
                     break;
                 case 2:
                     if(IV_YUV_420SP_UV == ps_buf1->e_color_fmt)
@@ -139,14 +137,11 @@ void compute_psnr(app_ctxt_t *ps_app_ctxt, iv_raw_buf_t *ps_buf1, iv_raw_buf_t *
                     else
                         pu1_buf1 = ps_buf1->apv_bufs[1];
                     incr1 = 2;
-                    wd = ps_buf1->au4_wd[0] >> 1;
-                    ht = ps_buf1->au4_ht[0] >> 1;
-                    strd1 = ps_buf1->au4_strd[1] - ps_buf1->au4_wd[1];
                     break;
             }
         }
         if ((IV_YUV_420SP_UV == ps_buf2->e_color_fmt)
-                        || (IV_YUV_420SP_VU == ps_buf2->e_color_fmt))
+                        || (IV_YUV_420SP_UV == ps_buf2->e_color_fmt))
         {
             switch(comp)
             {
@@ -158,21 +153,14 @@ void compute_psnr(app_ctxt_t *ps_app_ctxt, iv_raw_buf_t *ps_buf1, iv_raw_buf_t *
                         pu1_buf2 = ps_buf2->apv_bufs[1];
                     else
                         pu1_buf2 = (UWORD8 *)ps_buf2->apv_bufs[1] + 1;
-                    incr2 = 2;
-                    wd = ps_buf2->au4_wd[0] >> 1;
-                    ht = ps_buf2->au4_ht[0] >> 1;
-
+                    incr1 = 2;
                     break;
                 case 2:
                     if(IV_YUV_420SP_UV == ps_buf2->e_color_fmt)
                         pu1_buf2 = (UWORD8 *)ps_buf2->apv_bufs[1] + 1;
                     else
                         pu1_buf2 = ps_buf2->apv_bufs[1];
-                    incr2 = 2;
-                    wd = ps_buf2->au4_wd[0] >> 1;
-                    ht = ps_buf2->au4_ht[0] >> 1;
-                    strd2 = ps_buf2->au4_strd[1] - ps_buf2->au4_wd[1];
-
+                    incr1 = 2;
                     break;
             }
         }
@@ -187,8 +175,8 @@ void compute_psnr(app_ctxt_t *ps_app_ctxt, iv_raw_buf_t *ps_buf1, iv_raw_buf_t *
                 pu1_buf2 += incr2;
                 df_psnr[comp] += diff * diff;
             }
-            pu1_buf1 += strd1;
-            pu1_buf2 += strd2;
+            pu1_buf1 += strd1 - ps_buf1->au4_wd[comp];
+            pu1_buf2 += strd2 - ps_buf2->au4_wd[comp];
         }
         df_psnr[comp] /= (wd * ht);
         if(df_psnr[comp])
