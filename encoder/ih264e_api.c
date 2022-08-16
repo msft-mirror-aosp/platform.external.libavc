@@ -194,7 +194,7 @@ static IV_STATUS_T api_check_input_dimensions(codec_t *ps_codec,
             break;
         case IV_YUV_420SP_UV:
         case IV_YUV_420SP_VU:
-            if ((ps_inp_buf->au4_wd[0] / 2) != ps_inp_buf->au4_wd[1])
+            if (ps_inp_buf->au4_wd[0] != ps_inp_buf->au4_wd[1])
             {
                 ps_op->s_ive_op.u4_error_code |= 1 << IVE_UNSUPPORTEDPARAM;
                 ps_op->s_ive_op.u4_error_code |= IH264E_WIDTH_NOT_SUPPORTED;
@@ -2938,8 +2938,8 @@ static WORD32 ih264e_set_default_params(cfg_params_t *ps_cfg)
     ps_cfg->u4_constrained_intra_pred = 0;
     ps_cfg->u4_pic_info_type = 0;
     ps_cfg->u4_mb_info_type = 0;
-    ps_cfg->s_vui.u1_video_signal_type_present_flag = 1;
-    ps_cfg->s_vui.u1_colour_description_present_flag = 1;
+    ps_cfg->s_vui.u1_video_signal_type_present_flag = 0;
+    ps_cfg->s_vui.u1_colour_description_present_flag = 0;
 
     return ret;
 }
@@ -5870,6 +5870,9 @@ static WORD32 ih264e_set_vui_params(void *pv_api_ip,
                     ps_ip->u1_log2_max_mv_length_vertical;
     ps_vui->u1_num_reorder_frames = ps_ip->u1_num_reorder_frames;
     ps_vui->u1_max_dec_frame_buffering = ps_ip->u1_max_dec_frame_buffering;
+
+    ps_cfg->u4_timestamp_high = -1;
+    ps_cfg->u4_timestamp_low = -1;
 
     return IV_SUCCESS;
 }
