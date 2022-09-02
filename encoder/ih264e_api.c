@@ -194,7 +194,7 @@ static IV_STATUS_T api_check_input_dimensions(codec_t *ps_codec,
             break;
         case IV_YUV_420SP_UV:
         case IV_YUV_420SP_VU:
-            if ((ps_inp_buf->au4_wd[0] / 2) != ps_inp_buf->au4_wd[1])
+            if (ps_inp_buf->au4_wd[0] != ps_inp_buf->au4_wd[1])
             {
                 ps_op->s_ive_op.u4_error_code |= 1 << IVE_UNSUPPORTEDPARAM;
                 ps_op->s_ive_op.u4_error_code |= IH264E_WIDTH_NOT_SUPPORTED;
@@ -2873,6 +2873,7 @@ static WORD32 ih264e_set_default_params(cfg_params_t *ps_cfg)
     ps_cfg->u4_max_level = DEFAULT_MAX_LEVEL;
     ps_cfg->e_inp_color_fmt = IV_YUV_420SP_UV;
     ps_cfg->u4_enable_recon = DEFAULT_RECON_ENABLE;
+    ps_cfg->u4_enable_quality_metrics = DEFAULT_QUALITY_METRICS_ENABLE;
     ps_cfg->e_recon_color_fmt = IV_YUV_420P;
     ps_cfg->u4_enc_speed_preset = IVE_FASTEST;
     ps_cfg->e_rc_mode = DEFAULT_RC;
@@ -2938,8 +2939,8 @@ static WORD32 ih264e_set_default_params(cfg_params_t *ps_cfg)
     ps_cfg->u4_constrained_intra_pred = 0;
     ps_cfg->u4_pic_info_type = 0;
     ps_cfg->u4_mb_info_type = 0;
-    ps_cfg->s_vui.u1_video_signal_type_present_flag = 1;
-    ps_cfg->s_vui.u1_colour_description_present_flag = 1;
+    ps_cfg->s_vui.u1_video_signal_type_present_flag = 0;
+    ps_cfg->s_vui.u1_colour_description_present_flag = 0;
 
     return ret;
 }
@@ -3044,6 +3045,8 @@ static WORD32 ih264e_init(codec_t *ps_codec)
 
     /* Process thread created status */
     memset(ps_codec->ai4_process_thread_created, 0, MAX_PROCESS_THREADS);
+
+    memset(&ps_codec->s_global_quality_stats, 0, sizeof(ps_codec->s_global_quality_stats));
 
     /* Number of MBs processed together */
     ps_codec->i4_proc_nmb = 8;
@@ -5870,6 +5873,9 @@ static WORD32 ih264e_set_vui_params(void *pv_api_ip,
                     ps_ip->u1_log2_max_mv_length_vertical;
     ps_vui->u1_num_reorder_frames = ps_ip->u1_num_reorder_frames;
     ps_vui->u1_max_dec_frame_buffering = ps_ip->u1_max_dec_frame_buffering;
+
+    ps_cfg->u4_timestamp_high = -1;
+    ps_cfg->u4_timestamp_low = -1;
 
     return IV_SUCCESS;
 }
