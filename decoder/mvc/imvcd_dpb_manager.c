@@ -25,6 +25,7 @@
 /*  Description       : Functions for MVC NALU parsing                       */
 /*                                                                           */
 /*****************************************************************************/
+#include <stdbool.h>
 
 #include "ih264_typedefs.h"
 #include "ih264d_error_handler.h"
@@ -1503,10 +1504,6 @@ static WORD32 imvcd_dpb_delete_gap_frm_mmco(mvc_dpb_manager_t *ps_dpb_mgr, WORD3
 static WORD32 imvcd_dpb_insert_lt_node(mvc_dpb_manager_t *ps_dpb_mgr, mvc_dpb_info_t *ps_new_node,
                                        UWORD32 u4_lt_idx)
 {
-    WORD32 i;
-
-    mvc_dpb_info_t *ps_next_dpb = ps_dpb_mgr->ps_dpb_lt_head;
-
     ps_new_node->s_top_field.u1_reference_info = IS_LONG_TERM;
     ps_new_node->s_bot_field.u1_reference_info = IS_LONG_TERM;
     ps_new_node->s_top_field.u1_long_term_frame_idx = u4_lt_idx;
@@ -1516,27 +1513,28 @@ static WORD32 imvcd_dpb_insert_lt_node(mvc_dpb_manager_t *ps_dpb_mgr, mvc_dpb_in
 
     if(ps_dpb_mgr->u1_num_lt_ref_bufs > 0)
     {
-        if(u4_lt_idx < ps_next_dpb->ps_au_buf->u1_long_term_frm_idx)
-        {
-            ps_new_node->ps_prev_long = ps_next_dpb;
-            ps_dpb_mgr->ps_dpb_lt_head = ps_new_node;
-        }
-        else
-        {
-            ps_next_dpb = ps_next_dpb->ps_prev_long;
+        WORD32 i;
 
-            for(i = 1; i < ps_dpb_mgr->u1_num_lt_ref_bufs; i++)
+        mvc_dpb_info_t **pps_next_node = &ps_dpb_mgr->ps_dpb_lt_head;
+
+        for(i = 0; i < ps_dpb_mgr->u1_num_lt_ref_bufs; i++)
+        {
+            if((*pps_next_node)->ps_au_buf->u1_long_term_frm_idx > u4_lt_idx)
             {
-                if(ps_next_dpb->ps_au_buf->u1_long_term_frm_idx > u4_lt_idx)
-                {
-                    ps_new_node->ps_prev_long = ps_next_dpb->ps_prev_long;
-                    ps_next_dpb->ps_prev_long = ps_new_node;
+                ps_new_node->ps_prev_long = *pps_next_node;
+                *pps_next_node = ps_new_node;
 
-                    break;
-                }
-
-                ps_next_dpb = ps_next_dpb->ps_prev_long;
+                break;
             }
+            else if(NULL == (*pps_next_node)->ps_prev_long)
+            {
+                (*pps_next_node)->ps_prev_long = ps_new_node;
+                ps_new_node->ps_prev_long = NULL;
+
+                break;
+            }
+
+            pps_next_node = &(*pps_next_node)->ps_prev_long;
         }
     }
     else
@@ -2178,4 +2176,28 @@ WORD32 imvcd_dpb_update_default_index_list(mvc_dpb_manager_t *ps_dpb_mgr)
     }
 
     return OK;
+}
+
+bool imvcd_dpb_is_diff_poc_valid(mvc_dpb_manager_t *ps_dpb_mgr, WORD32 i4_curr_poc)
+{
+    WORD32 i;
+
+    mvc_dpb_info_t *ps_next_dpb = ps_dpb_mgr->ps_dpb_st_head;
+
+    /* Check in conformance with section 8.2.1 from spec */
+    /* Particularly the statement - */
+    /* 'The bitstream shall not contain data that result in values of DiffPicOrderCnt(picA, picB)
+     * used in the decoding process that exceed the range of -2^15 to 2^15 - 1 inclusive' */
+    for(i = 0; i < ps_dpb_mgr->u1_num_st_ref_bufs; i++)
+    {
+        if(((((WORD64) i4_curr_poc) - ((WORD64) ps_next_dpb->ps_au_buf->i4_poc)) >= (1 << 15)) ||
+           ((((WORD64) i4_curr_poc) - ((WORD64) ps_next_dpb->ps_au_buf->i4_poc)) < -(1 << 15)))
+        {
+            return false;
+        }
+
+        ps_next_dpb = ps_next_dpb->ps_prev_short;
+    }
+
+    return true;
 }
