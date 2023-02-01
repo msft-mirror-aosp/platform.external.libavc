@@ -38,7 +38,6 @@
 #ifndef IH264E_PLATFORM_MACROS_H_
 #define IH264E_PLATFORM_MACROS_H_
 
-#define DATA_SYNC()
 /*****************************************************************************/
 /* Extern Function Declarations                                              */
 /*****************************************************************************/
