@@ -108,4 +108,3 @@ IV_ARCH_T ih264e_default_arch(void)
 {
     return ARCH_NA;
 }
-

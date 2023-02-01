@@ -1470,9 +1470,9 @@ void set_vui_params(app_ctxt_t *ps_app_ctxt)
     s_vui_params_ip.u1_video_format = 0;
     s_vui_params_ip.u1_video_full_range_flag = 0;
     s_vui_params_ip.u1_colour_description_present_flag = 1;
-    s_vui_params_ip.u1_colour_primaries = 0;
-    s_vui_params_ip.u1_transfer_characteristics = 0;
-    s_vui_params_ip.u1_matrix_coefficients = 0;
+    s_vui_params_ip.u1_colour_primaries = 2;
+    s_vui_params_ip.u1_transfer_characteristics = 2;
+    s_vui_params_ip.u1_matrix_coefficients = 2;
     s_vui_params_ip.u1_chroma_loc_info_present_flag = 0;
     s_vui_params_ip.u1_chroma_sample_loc_type_top_field = 0;
     s_vui_params_ip.u1_chroma_sample_loc_type_bottom_field = 0;
@@ -1836,6 +1836,59 @@ void synchronous_encode(iv_obj_t *ps_enc, app_ctxt_t *ps_app_ctxt)
         }
     }
 
+    /*****************************************************************************/
+    /*   Video control Set in Encode header mode                                 */
+    /*****************************************************************************/
+    set_enc_mode(ps_app_ctxt, -1, -1, IVE_ENC_MODE_HEADER);
+
+    // Encode header
+    memset(&ih264e_video_encode_ip, 0, sizeof(ih264e_video_encode_ip));
+    memset(&ih264e_video_encode_op, 0, sizeof(ih264e_video_encode_op));
+
+    ps_video_encode_ip->u4_size = sizeof(ih264e_video_encode_ip_t);
+    ps_video_encode_op->u4_size = sizeof(ih264e_video_encode_op_t);
+
+    ps_inp_raw_buf->apv_bufs[0] = NULL;
+    ps_inp_raw_buf->apv_bufs[1] = NULL;
+    ps_inp_raw_buf->apv_bufs[2] = NULL;
+
+    ps_video_encode_ip->e_cmd = IVE_CMD_VIDEO_ENCODE;
+    ps_video_encode_ip->pv_bufs = NULL;
+    ps_video_encode_ip->pv_mb_info = NULL;
+    ps_video_encode_ip->pv_pic_info = NULL;
+    ps_video_encode_ip->u4_pic_info_type = ps_app_ctxt->u4_pic_info_type;
+    ps_video_encode_ip->u4_is_last = 0;
+    ps_video_encode_ip->u4_mb_info_type = ps_app_ctxt->u4_mb_info_type;
+    ps_video_encode_ip->u4_pic_info_type = ps_app_ctxt->u4_pic_info_type;
+    ps_video_encode_ip->s_out_buf.pv_buf = ps_app_ctxt->as_output_buf[0].pu1_buf;
+    ps_video_encode_ip->s_out_buf.u4_bytes = 0;
+    ps_video_encode_ip->s_out_buf.u4_bufsize = ps_app_ctxt->as_output_buf[0].u4_buf_size;
+    ps_video_encode_ip->u4_timestamp_high = 0;
+    ps_video_encode_ip->u4_timestamp_low = 0;
+
+    status = ih264e_api_function(ps_enc, &ih264e_video_encode_ip, &ih264e_video_encode_op);
+    if(IV_SUCCESS != status)
+    {
+        printf("Encode Header failed = 0x%x\n", ih264e_video_encode_op.s_ive_op.u4_error_code);
+        return;
+    }
+
+    if(1 == ps_video_encode_op->output_present)
+    {
+        status = write_output(ps_app_ctxt->fp_op, (UWORD8 *) ps_video_encode_op->s_out_buf.pv_buf,
+                              ps_video_encode_op->s_out_buf.u4_bytes);
+        if(IV_SUCCESS != status)
+        {
+            printf("Error: Unable to write to output file\n");
+            return;
+        }
+    }
+
+    /*****************************************************************************/
+    /*   Video control Set in Encode picture mode                                */
+    /*****************************************************************************/
+    set_enc_mode(ps_app_ctxt, -1, -1, IVE_ENC_MODE_PICTURE);
+
     GETTIME(&ps_app_ctxt->enc_start_time);
     ps_app_ctxt->enc_last_time = ps_app_ctxt->enc_start_time;
 
@@ -1919,6 +1972,9 @@ void synchronous_encode(iv_obj_t *ps_enc, app_ctxt_t *ps_app_ctxt)
             printf("\n Unable to find a free input buffer!!");
             exit(0);
         }
+
+        memset(&ih264e_video_encode_ip, 0, sizeof(ih264e_video_encode_ip));
+        memset(&ih264e_video_encode_op, 0, sizeof(ih264e_video_encode_op));
 
         ps_video_encode_ip->u4_size = sizeof(ih264e_video_encode_ip_t);
         ps_video_encode_op->u4_size = sizeof(ih264e_video_encode_op_t);
@@ -2078,7 +2134,6 @@ void synchronous_encode(iv_obj_t *ps_enc, app_ctxt_t *ps_app_ctxt)
         ps_video_encode_ip->u4_is_last = is_last;
         ps_video_encode_ip->u4_mb_info_type = ps_app_ctxt->u4_mb_info_type;
         ps_video_encode_ip->u4_pic_info_type = ps_app_ctxt->u4_pic_info_type;;
-        ps_video_encode_op->s_out_buf.pv_buf= NULL;
         ps_video_encode_ip->u4_timestamp_high = u4_timestamp_high;
         ps_video_encode_ip->u4_timestamp_low = u4_timestamp_low;
 
@@ -2806,11 +2861,6 @@ int main(int argc, char *argv[])
     /*   Video control  Set Profile params                                       */
     /*****************************************************************************/
     set_profile_params(&s_app_ctxt, 0, 0);
-
-    /*****************************************************************************/
-    /*   Video control Set in Encode header mode                                 */
-    /*****************************************************************************/
-    set_enc_mode(&s_app_ctxt, 0, 0, IVE_ENC_MODE_PICTURE);
 
     /*****************************************************************************/
     /*   Video usability information                                             */
