@@ -1,3 +1,16 @@
+name: "libavc"
+description: "Android fork of the libavc library."
+
 third_party {
+  url {
+    type: GIT
+    value: "https://github.com/ittiam-systems/libavc.git"
+  }
+  version: "da77ac1a5feecb1874d8ee7019b7f24ba5bfefa5"
   license_type: NOTICE
+  last_upgrade_date {
+    year: 2023
+    month: 03
+    day: 04
+  }
 }
