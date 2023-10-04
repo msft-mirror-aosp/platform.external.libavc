@@ -118,6 +118,7 @@ void Codec::createCodec() {
   create_ip.s_ivd_create_ip_t.e_output_format = mColorFormat;
   create_ip.s_ivd_create_ip_t.pf_aligned_alloc = iv_aligned_malloc;
   create_ip.s_ivd_create_ip_t.pf_aligned_free = iv_aligned_free;
+  create_ip.u4_keep_threads_active = 1;
   create_ip.s_ivd_create_ip_t.pv_mem_ctxt = NULL;
   create_ip.s_ivd_create_ip_t.u4_size = sizeof(ih264d_create_ip_t);
   create_op.s_ivd_create_op_t.u4_size = sizeof(ih264d_create_op_t);
@@ -251,7 +252,9 @@ void Codec::allocFrame() {
 void Codec::decodeHeader(const uint8_t *data, size_t size) {
   setParams(IVD_DECODE_HEADER);
 
-  while (size > 0) {
+  size_t numDecodeCalls = 0;
+
+  while (size > 0 && numDecodeCalls < kMaxNumDecodeCalls) {
     IV_API_CALL_STATUS_T ret;
     ivd_video_decode_ip_t dec_ip{};
     ivd_video_decode_op_t dec_op{};
@@ -275,6 +278,7 @@ void Codec::decodeHeader(const uint8_t *data, size_t size) {
 
     data += bytes_consumed;
     size -= bytes_consumed;
+    numDecodeCalls++;
 
     mWidth = std::min(dec_op.u4_pic_wd, (UWORD32)10240);
     mHeight = std::min(dec_op.u4_pic_ht, (UWORD32)10240);
