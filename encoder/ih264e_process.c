@@ -27,24 +27,23 @@
 *  Contains functions for codec thread
 *
 * @author
-*  Harish
+*  ittiam
 *
 * @par List of Functions:
-* - ih264e_generate_sps_pps()
-* - ih264e_init_entropy_ctxt()
-* - ih264e_entropy()
-* - ih264e_pack_header_data()
-* - ih264e_update_proc_ctxt()
-* - ih264e_init_proc_ctxt()
-* - ih264e_pad_recon_buffer()
-* - ih264e_dblk_pad_hpel_processing_n_mbs()
-* - ih264e_process()
-* - ih264e_set_rc_pic_params()
-* - ih264e_update_rc_post_enc()
-* - ih264e_process_thread()
+* - ih264e_generate_sps_pps
+* - ih264e_init_entropy_ctxt
+* - ih264e_entropy
+* - ih264e_pack_header_data
+* - ih264e_update_proc_ctxt
+* - ih264e_init_proc_ctxt
+* - ih264e_pad_recon_buffer
+* - ih264e_dblk_pad_hpel_processing_n_mbs
+* - ih264e_process
+* - ih264e_update_rc_post_enc
+* - ih264e_process_thread
 *
 * @remarks
-*  None
+*  none
 *
 *******************************************************************************
 */
@@ -53,7 +52,7 @@
 /* File Includes                                                             */
 /*****************************************************************************/
 
-/* System include files */
+/* System Include Files */
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -61,57 +60,60 @@
 #include <limits.h>
 #include <assert.h>
 
-/* User include files */
+/* User Include Files */
+#include "ih264e_config.h"
 #include "ih264_typedefs.h"
 #include "iv2.h"
 #include "ive2.h"
-#include "ih264_defs.h"
+#include "ithread.h"
+
 #include "ih264_debug.h"
-#include "ime_distortion_metrics.h"
-#include "ime_defs.h"
-#include "ime_structs.h"
+#include "ih264_macros.h"
 #include "ih264_error.h"
+#include "ih264_defs.h"
+#include "ih264_mem_fns.h"
+#include "ih264_padding.h"
 #include "ih264_structs.h"
 #include "ih264_trans_quant_itrans_iquant.h"
 #include "ih264_inter_pred_filters.h"
-#include "ih264_mem_fns.h"
-#include "ih264_padding.h"
 #include "ih264_intra_pred_filters.h"
 #include "ih264_deblk_edge_filters.h"
-#include "ih264_cabac_tables.h"
-#include "ih264_platform_macros.h"
-#include "ih264_macros.h"
-#include "ih264_buf_mgr.h"
-#include "ih264e_error.h"
-#include "ih264e_bitstream.h"
 #include "ih264_common_tables.h"
+#include "ih264_cavlc_tables.h"
+#include "ih264_cabac_tables.h"
+#include "ih264_buf_mgr.h"
 #include "ih264_list.h"
-#include "ih264e_defs.h"
+#include "ih264_platform_macros.h"
+
+#include "ime_defs.h"
+#include "ime_distortion_metrics.h"
+#include "ime_structs.h"
+#include "ime_statistics.h"
+
+#include "irc_mem_req_and_acq.h"
 #include "irc_cntrl_param.h"
 #include "irc_frame_info_collector.h"
+#include "irc_rate_control_api.h"
+
+#include "ih264e_error.h"
+#include "ih264e_defs.h"
+#include "ih264e_globals.h"
 #include "ih264e_rate_control.h"
+#include "ih264e_bitstream.h"
 #include "ih264e_cabac_structs.h"
 #include "ih264e_structs.h"
-#include "ih264e_cabac.h"
-#include "ih264e_process.h"
-#include "ithread.h"
-#include "ih264e_intra_modes_eval.h"
+#include "ih264e_deblk.h"
 #include "ih264e_encode_header.h"
-#include "ih264e_globals.h"
-#include "ih264e_config.h"
+#include "ih264e_utils.h"
+#include "ih264e_me.h"
+#include "ih264e_intra_modes_eval.h"
+#include "ih264e_cavlc.h"
+#include "ih264e_cabac.h"
+#include "ih264e_master.h"
+#include "ih264e_process.h"
 #include "ih264e_trace.h"
 #include "ih264e_statistics.h"
-#include "ih264_cavlc_tables.h"
-#include "ih264e_cavlc.h"
-#include "ih264e_deblk.h"
-#include "ih264e_me.h"
-#include "ih264e_debug.h"
-#include "ih264e_master.h"
-#include "ih264e_utils.h"
-#include "irc_mem_req_and_acq.h"
-#include "irc_rate_control_api.h"
 #include "ih264e_platform_macros.h"
-#include "ime_statistics.h"
 
 
 /*****************************************************************************/
@@ -121,17 +123,17 @@
 /**
 ******************************************************************************
 *
-*  @brief This function generates sps, pps set on request
+* @brief This function generates sps, pps set on request
 *
-*  @par   Description
+* @par   Description
 *  When the encoder is set in header generation mode, the following function
 *  is called. This generates sps and pps headers and returns the control back
 *  to caller.
 *
-*  @param[in]    ps_codec
+* @param[in]    ps_codec
 *  pointer to codec context
 *
-*  @return      success or failure error code
+* @return      success or failure error code
 *
 ******************************************************************************
 */
@@ -275,7 +277,6 @@ IH264E_ERROR_T ih264e_init_entropy_ctxt(process_ctxt_t *ps_proc)
 *
 *******************************************************************************
 */
-
 IH264E_ERROR_T ih264e_entropy(process_ctxt_t *ps_proc)
 {
     /* codec context */
@@ -392,6 +393,9 @@ IH264E_ERROR_T ih264e_entropy(process_ctxt_t *ps_proc)
         /* populate slice header */
         ih264e_populate_slice_header(ps_proc, ps_slice_hdr, ps_pps, ps_sps);
 
+        /* Starting bitstream offset for header in bits */
+        bitstream_start_offset = GET_NUM_BITS(ps_bitstrm);
+
         /* generate sei */
         u4_insert_per_idr = (NAL_SLICE_IDR == ps_slice_hdr->i1_nal_unit_type);
 
@@ -451,6 +455,11 @@ IH264E_ERROR_T ih264e_entropy(process_ctxt_t *ps_proc)
             RETURN_ENTROPY_IF_ERROR(ps_codec, ps_entropy, ctxt_sel);
             ih264e_init_cabac_ctxt(ps_entropy);
         }
+
+        /* Ending bitstream offset for header in bits */
+        bitstream_end_offset = GET_NUM_BITS(ps_bitstrm);
+        ps_entropy->u4_header_bits[i4_slice_type == PSLICE] +=
+                        bitstream_end_offset - bitstream_start_offset;
     }
 
     /* begin entropy coding for the mb set */
@@ -608,12 +617,17 @@ IH264E_ERROR_T ih264e_entropy(process_ctxt_t *ps_proc)
                         && ps_codec->s_cfg.e_slice_mode
                                         != IVE_SLICE_MODE_BLOCKS)
         {
+            bitstream_start_offset = GET_NUM_BITS(ps_bitstrm);
             ih264e_cabac_encode_terminate(ps_cabac_ctxt, 0);
+            bitstream_end_offset = GET_NUM_BITS(ps_bitstrm);
+            ps_entropy->u4_header_bits[i4_slice_type == PSLICE] +=
+                            bitstream_end_offset - bitstream_start_offset;
         }
     }
 
     if (ps_entropy->i4_eof)
     {
+        bitstream_start_offset = GET_NUM_BITS(ps_bitstrm);
         if (CAVLC == ps_entropy->u1_entropy_coding_mode_flag)
         {
             /* mb skip run */
@@ -635,6 +649,9 @@ IH264E_ERROR_T ih264e_entropy(process_ctxt_t *ps_proc)
         {
             ih264e_cabac_encode_terminate(ps_cabac_ctxt, 1);
         }
+        bitstream_end_offset = GET_NUM_BITS(ps_bitstrm);
+        ps_entropy->u4_header_bits[i4_slice_type == PSLICE] +=
+                        bitstream_end_offset - bitstream_start_offset;
 
         DEBUG("entropy status %x", ps_entropy->i4_error_code);
     }
@@ -1076,6 +1093,12 @@ WORD32 ih264e_update_proc_ctxt(process_ctxt_t *ps_proc)
             ih264_list_terminate(ps_codec->pv_entropy_jobq);
     }
 
+    /* update intra cost if valid */
+    if (ps_proc->i4_mb_intra_cost != INT_MAX)
+    {
+        ps_codec->pi4_mb_intra_cost[(i4_mb_y * i4_wd_mbs) + i4_mb_x] = ps_proc->i4_mb_intra_cost;
+    }
+
     /* update proc map */
     pu1_proc_map[i4_mb_x] = 1;
 
@@ -1110,10 +1133,9 @@ WORD32 ih264e_update_proc_ctxt(process_ctxt_t *ps_proc)
     ps_proc->apu1_ref_buf_chroma[0] += MB_SIZE;
     ps_proc->apu1_ref_buf_chroma[1] += MB_SIZE;
 
-
-
     /* Reset cost, distortion params */
     ps_proc->i4_mb_cost = INT_MAX;
+    ps_proc->i4_mb_intra_cost = INT_MAX;
     ps_proc->i4_mb_distortion = SHRT_MAX;
 
     ps_proc->ps_pu += *ps_proc->pu4_mb_pu_cnt;
@@ -1258,7 +1280,7 @@ IH264E_ERROR_T ih264e_init_proc_ctxt(process_ctxt_t *ps_proc)
     ps_proc->pu1_rec_buf_luma = ps_proc->pu1_rec_buf_luma_base + (i4_mb_x * MB_SIZE) + i4_rec_strd * (i4_mb_y * MB_SIZE);
     ps_proc->pu1_rec_buf_chroma = ps_proc->pu1_rec_buf_chroma_base + (i4_mb_x * MB_SIZE) + i4_rec_strd * (i4_mb_y * BLK8x8SIZE);
 
-    /* Tempral back and forward reference buffer */
+    /* Temporal back and forward reference buffer */
     ps_proc->apu1_ref_buf_luma[0] = ps_proc->apu1_ref_buf_luma_base[0] + (i4_mb_x * MB_SIZE) + i4_rec_strd * (i4_mb_y * MB_SIZE);
     ps_proc->apu1_ref_buf_chroma[0] = ps_proc->apu1_ref_buf_chroma_base[0] + (i4_mb_x * MB_SIZE) + i4_rec_strd * (i4_mb_y * BLK8x8SIZE);
     ps_proc->apu1_ref_buf_luma[1] = ps_proc->apu1_ref_buf_luma_base[1] + (i4_mb_x * MB_SIZE) + i4_rec_strd * (i4_mb_y * MB_SIZE);
@@ -1436,7 +1458,14 @@ IH264E_ERROR_T ih264e_init_proc_ctxt(process_ctxt_t *ps_proc)
     ps_proc->u4_mb_type = I16x16;
 
     /* lambda */
-    ps_proc->u4_lambda = gu1_qp0[ps_qp_params->u1_mb_qp];
+    if (ps_codec->pic_type == PIC_B)
+    {
+        ps_proc->u4_lambda = gu1_qp_lambdaB[ps_qp_params->u1_mb_qp];
+    }
+    else
+    {
+        ps_proc->u4_lambda = gu1_qp_lambdaIP[ps_qp_params->u1_mb_qp];
+    }
 
     /* mb distortion */
     ps_proc->i4_mb_distortion = SHRT_MAX;
@@ -1457,6 +1486,7 @@ IH264E_ERROR_T ih264e_init_proc_ctxt(process_ctxt_t *ps_proc)
 
     /* mb cost */
     ps_proc->i4_mb_cost = INT_MAX;
+    ps_proc->i4_mb_intra_cost = INT_MAX;
 
     /**********************/
     /* init deblk context */
@@ -1585,9 +1615,6 @@ IH264E_ERROR_T ih264e_pad_recon_buffer(process_ctxt_t *ps_proc,
 
     return IH264E_SUCCESS;
 }
-
-
-
 
 /**
 *******************************************************************************
@@ -1909,7 +1936,7 @@ IH264E_ERROR_T ih264e_dblk_pad_hpel_processing_n_mbs(process_ctxt_t *ps_proc,
 /**
 *******************************************************************************
 *
-* @brief This function performs luma & chroma core coding for a set of mb's.
+* @brief This function performs luma & chroma encoding for a set of mb's.
 *
 * @par Description:
 *  The mb to be coded is taken and is evaluated over a predefined set of modes
@@ -2020,7 +2047,6 @@ WORD32 ih264e_process(process_ctxt_t *ps_proc)
         u4_valid_modes |= (1 << B16x16);
     }
 
-
     /* init entropy */
     ps_proc->s_entropy.i4_mb_x = ps_proc->i4_mb_x;
     ps_proc->s_entropy.i4_mb_y = ps_proc->i4_mb_y;
@@ -2070,16 +2096,13 @@ WORD32 ih264e_process(process_ctxt_t *ps_proc)
                     /* get the min sad condition for current mb */
                     ps_proc->u4_min_sad_reached = ps_proc->ps_nmb_info[u4_mb_index].u4_min_sad_reached;
                     ps_proc->u4_min_sad = ps_proc->ps_nmb_info[u4_mb_index].u4_min_sad;
+                    ps_proc->i4_mb_distortion = ps_proc->ps_nmb_info[u4_mb_index].i4_mb_distortion;
+                    ps_proc->i4_mb_cost = ps_proc->ps_nmb_info[u4_mb_index].i4_mb_cost;
+                    ps_proc->u4_mb_type = ps_proc->ps_nmb_info[u4_mb_index].u4_mb_type;
 
                     ps_proc->ps_skip_mv = &(ps_proc->ps_nmb_info[u4_mb_index].as_skip_mv[0]);
                     ps_proc->ps_ngbr_avbl = &(ps_proc->ps_nmb_info[u4_mb_index].s_ngbr_avbl);
                     ps_proc->ps_pred_mv = &(ps_proc->ps_nmb_info[u4_mb_index].as_pred_mv[0]);
-
-                    ps_proc->i4_mb_distortion = ps_proc->ps_nmb_info[u4_mb_index].i4_mb_distortion;
-                    ps_proc->i4_mb_cost = ps_proc->ps_nmb_info[u4_mb_index].i4_mb_cost;
-                    ps_proc->u4_min_sad = ps_proc->ps_nmb_info[u4_mb_index].u4_min_sad;
-                    ps_proc->u4_min_sad_reached = ps_proc->ps_nmb_info[u4_mb_index].u4_min_sad_reached;
-                    ps_proc->u4_mb_type = ps_proc->ps_nmb_info[u4_mb_index].u4_mb_type;
 
                     /* get the best sub pel buffer */
                     ps_proc->pu1_best_subpel_buf = ps_proc->ps_nmb_info[u4_mb_index].pu1_best_sub_pel_buf;
@@ -2184,8 +2207,8 @@ WORD32 ih264e_process(process_ctxt_t *ps_proc)
                     }
 
                 }
+            }
         }
-     }
 
         /* is intra */
         if (ps_proc->u4_mb_type == I4x4 || ps_proc->u4_mb_type == I16x16 || ps_proc->u4_mb_type == I8x8)
@@ -2472,6 +2495,12 @@ WORD32 ih264e_update_rc_post_enc(codec_t *ps_codec, WORD32 ctxt_sel, WORD32 i4_i
     if (ps_codec->s_rate_control.post_encode_skip[ctxt_sel])
     {
          ps_entropy->ps_bitstrm->u4_strm_buf_offset = 0;
+         // If an IDR frame was skipped, restore frame num and IDR pic id
+         if (ps_codec->u4_is_idr == 1)
+         {
+             ps_codec->i4_frame_num = ps_codec->i4_restore_frame_num;
+             ps_codec->i4_idr_pic_id--;
+         }
     }
     else if (i4_stuffing_byte)
     {
@@ -2620,12 +2649,6 @@ WORKER:
 
                 /* entropy code all mbs enlisted under the current job */
                 error_status = ih264e_entropy(ps_proc);
-
-                if ((s_job.i2_mb_y == ps_proc->i4_ht_mbs - 1) || error_status != IH264_SUCCESS)
-                {
-                    error_status |= ih264e_update_rc_post_enc(ps_codec, ctxt_sel,
-                                                              (ps_codec->i4_poc == 0));
-                }
 
                 /* Dont execute any further instructions until store synchronization took place */
                 DATA_SYNC();
