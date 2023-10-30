@@ -101,6 +101,7 @@
 #include "ih264e_defs.h"
 #include "ih264e_structs.h"
 /* Dependencies of 'ih264e_utils.h' */
+#include "irc_mem_req_and_acq.h"
 #include "ih264e_rc_mem_interface.h"
 #include "ih264e_time_stamp.h"
 #include "ih264e_utils.h"
@@ -512,6 +513,36 @@ WORD32 isvce_svc_inp_params_validate(isvce_init_ip_t *ps_ip, isvce_cfg_params_t 
     }
 
     return u4_error_code;
+}
+
+/**
+*******************************************************************************
+*
+* @brief
+*  Validates SVC RC params
+*
+* @param[in] ps_cfg
+*  Cfg parameters
+*
+* @returns  error code in conformance with 'IH264E_ERROR_T'
+*
+*******************************************************************************
+*/
+WORD32 isvce_svc_rc_params_validate(isvce_cfg_params_t *ps_cfg)
+{
+    WORD32 i;
+
+    /* RC requires total bits in a second to fit int32_t */
+    for(i = 0; i < ps_cfg->s_svc_params.u1_num_spatial_layers; i++)
+    {
+        if((((((UWORD64) ps_cfg->au4_target_bitrate[i]) * 1000llu) / ps_cfg->u4_tgt_frame_rate) *
+            ps_cfg->u4_idr_frm_interval) > ((UWORD64) INT32_MAX))
+        {
+            return IH264E_BITRATE_NOT_SUPPORTED;
+        }
+    }
+
+    return IH264E_SUCCESS;
 }
 
 /**
@@ -3542,6 +3573,15 @@ IH264E_ERROR_T isvce_codec_init(isvce_codec_t *ps_codec)
         isvce_init_air_map(ps_codec);
 
         ps_codec->i4_air_pic_cnt = -1;
+    }
+
+    {
+        WORD32 i4_err_code = isvce_svc_rc_params_validate(&ps_codec->s_cfg);
+
+        if(IH264E_SUCCESS != i4_err_code)
+        {
+            return i4_err_code;
+        }
     }
 
     /****************************************************/
