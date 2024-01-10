@@ -1,6 +1,6 @@
 # This project was upgraded with external_updater.
 # Usage: tools/external_updater/updater.sh update libavc
-# For more info, check https://cs.android.com/android/platform/superproject/+/master:tools/external_updater/README.md
+# For more info, check https://cs.android.com/android/platform/superproject/+/main:tools/external_updater/README.md
 
 name: "libavc"
 description: "Android fork of the libavc library."
@@ -9,11 +9,11 @@ third_party {
     type: GIT
     value: "https://github.com/ittiam-systems/libavc.git"
   }
-  version: "v1.1.1"
+  version: "v1.3.0"
   license_type: NOTICE
   last_upgrade_date {
     year: 2023
-    month: 3
-    day: 15
+    month: 10
+    day: 23
   }
 }
