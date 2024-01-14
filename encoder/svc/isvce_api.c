@@ -114,6 +114,7 @@
 #include "ime_structs.h"
 /* Dependencies of 'ih264e_utils.h' */
 #include "ih264e_defs.h"
+#include "irc_mem_req_and_acq.h"
 #include "ih264e_rc_mem_interface.h"
 #include "ih264e_structs.h"
 #include "ih264e_utils.h"
@@ -430,13 +431,6 @@ static IV_STATUS_T api_check_struct_sanity(iv_obj_t *ps_handle, void *pv_api_ip,
             {
                 ps_op->s_ive_op.u4_error_code |= 1 << IVE_UNSUPPORTEDPARAM;
                 ps_op->s_ive_op.u4_error_code |= IH264E_CODEC_LEVEL_NOT_SUPPORTED;
-                return (IV_FAIL);
-            }
-
-            if(ps_ip->s_ive_ip.e_inp_color_fmt != IV_YUV_420P)
-            {
-                ps_op->s_ive_op.u4_error_code |= 1 << IVE_UNSUPPORTEDPARAM;
-                ps_op->s_ive_op.u4_error_code |= IH264E_INPUT_CHROMA_FORMAT_NOT_SUPPORTED;
                 return (IV_FAIL);
             }
 
@@ -2261,7 +2255,7 @@ static WORD32 isvce_init(isvce_codec_t *ps_codec)
     /* reset status flags */
     for(i = 0; i < MAX_CTXT_SETS; i++)
     {
-        ps_codec->au4_entropy_thread_active[i] = 0;
+        ps_codec->ae_entropy_thread_exit_state[i] = INACTIVE;
         ps_codec->ai4_pic_cnt[i] = -1;
 
         ps_codec->s_rate_control.pre_encode_skip[i] = 0;
