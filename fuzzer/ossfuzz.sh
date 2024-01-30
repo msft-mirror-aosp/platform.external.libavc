@@ -18,6 +18,12 @@ test "${SRC}" != "" || exit 1
 test "${WORK}" != "" || exit 1
 test "${OUT}" != "" || exit 1
 
+#Opt out of shift sanitizer in undefined sanitizer
+if [[ $SANITIZER = *undefined* ]]; then
+  CFLAGS="$CFLAGS -fno-sanitize=shift"
+  CXXFLAGS="$CXXFLAGS -fno-sanitize=shift"
+fi
+
 # Build libavc
 build_dir=$WORK/build
 rm -rf ${build_dir}
@@ -25,8 +31,10 @@ mkdir -p ${build_dir}
 
 pushd ${build_dir}
 cmake ${SRC}/libavc -DENABLE_SVC=1 -DENABLE_MVC=1
-make -j$(nproc) avc_dec_fuzzer svc_dec_fuzzer svc_enc_fuzzer
+make -j$(nproc) avc_dec_fuzzer avc_enc_fuzzer mvc_dec_fuzzer svc_dec_fuzzer svc_enc_fuzzer
 cp ${build_dir}/avc_dec_fuzzer $OUT/
+cp ${build_dir}/avc_enc_fuzzer $OUT/
+cp ${build_dir}/mvc_dec_fuzzer $OUT/
 cp ${build_dir}/svc_dec_fuzzer $OUT/
 cp ${build_dir}/svc_enc_fuzzer $OUT/
 popd
