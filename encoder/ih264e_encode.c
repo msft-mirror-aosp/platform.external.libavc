@@ -31,9 +31,9 @@
 *  ittiam
 *
 * List of Functions
-*  - ih264e_join_threads()
-*  - ih264e_wait_for_thread()
-*  - ih264e_encode()
+*  - ih264e_join_threads
+*  - ih264e_wait_for_thread
+*  - ih264e_encode
 *
 ******************************************************************************
 */
@@ -50,49 +50,54 @@
 #include <assert.h>
 #include <limits.h>
 #include <stdbool.h>
-/* User Include files */
+
+/* User Include Files */
 #include "ih264e_config.h"
 #include "ih264_typedefs.h"
 #include "iv2.h"
 #include "ive2.h"
-#include "ih264e.h"
 #include "ithread.h"
-#include "ih264_defs.h"
-#include "ih264_macros.h"
+
 #include "ih264_debug.h"
-#include "ih264_structs.h"
-#include "ih264_platform_macros.h"
+#include "ih264_macros.h"
 #include "ih264_error.h"
-#include "ime_distortion_metrics.h"
-#include "ime_defs.h"
-#include "ime_structs.h"
-#include "ih264_trans_quant_itrans_iquant.h"
-#include "ih264_inter_pred_filters.h"
+#include "ih264_defs.h"
 #include "ih264_mem_fns.h"
 #include "ih264_padding.h"
+#include "ih264_structs.h"
+#include "ih264_trans_quant_itrans_iquant.h"
+#include "ih264_inter_pred_filters.h"
 #include "ih264_intra_pred_filters.h"
 #include "ih264_deblk_edge_filters.h"
 #include "ih264_cabac_tables.h"
+#include "ih264_buf_mgr.h"
 #include "ih264_list.h"
-#include "ih264e_error.h"
-#include "ih264e_defs.h"
-#include "ih264e_bitstream.h"
+#include "ih264_dpb_mgr.h"
+#include "ih264_platform_macros.h"
+
+#include "ime_defs.h"
+#include "ime_distortion_metrics.h"
+#include "ime_structs.h"
+
 #include "irc_mem_req_and_acq.h"
 #include "irc_cntrl_param.h"
 #include "irc_frame_info_collector.h"
-#include "ih264e_rate_control.h"
+
+#include "ih264e.h"
+#include "ih264e_error.h"
+#include "ih264e_defs.h"
 #include "ih264e_time_stamp.h"
+#include "ih264e_rate_control.h"
+#include "ih264e_bitstream.h"
 #include "ih264e_cabac_structs.h"
 #include "ih264e_structs.h"
+#include "ih264e_utils.h"
+#include "ih264e_encode_header.h"
 #include "ih264e_master.h"
 #include "ih264e_process.h"
-#include "ih264_buf_mgr.h"
-#include "ih264_dpb_mgr.h"
-#include "ih264e_utils.h"
 #include "ih264e_fmt_conv.h"
 #include "ih264e_statistics.h"
 #include "ih264e_trace.h"
-#include "ih264e_debug.h"
 #ifdef LOGO_EN
 #include "ih264e_ittiam_logo.h"
 #endif
@@ -215,8 +220,8 @@ WORD32 ih264e_encode(iv_obj_t *ps_codec_obj, void *pv_api_ip, void *pv_api_op)
     ih264e_video_encode_op_t *ps_video_encode_op = pv_api_op;
 
     /* i/o structures */
-    inp_buf_t s_inp_buf;
-    out_buf_t s_out_buf;
+    inp_buf_t s_inp_buf = {};
+    out_buf_t s_out_buf = {};
 
     /* temp var */
     WORD32 ctxt_sel = 0, i, i4_rc_pre_enc_skip;
@@ -233,12 +238,30 @@ WORD32 ih264e_encode(iv_obj_t *ps_codec_obj, void *pv_api_ip, void *pv_api_op)
     /* This will later be updated to the actual input that gets encoded */
     ps_video_encode_op->s_ive_op.s_inp_buf = ps_video_encode_ip->s_ive_ip.s_inp_buf;
 
+    if (ps_codec->i4_error_code & (1 << IVE_FATALERROR))
+    {
+        error_status = ps_codec->i4_error_code & 0xFF;
+        SET_ERROR_ON_RETURN(error_status,
+                            IVE_FATALERROR,
+                            ps_video_encode_op->s_ive_op.u4_error_code,
+                            IV_FAIL);
+    }
+
     /* Check for output memory allocation size */
     if (ps_video_encode_ip->s_ive_ip.s_out_buf.u4_bufsize < MIN_STREAM_SIZE)
     {
         error_status = IH264E_INSUFFICIENT_OUTPUT_BUFFER;
         SET_ERROR_ON_RETURN(error_status,
                             IVE_UNSUPPORTEDPARAM,
+                            ps_video_encode_op->s_ive_op.u4_error_code,
+                            IV_FAIL);
+    }
+
+    if (ps_codec->i4_init_done != 1)
+    {
+        error_status = IH264E_INIT_NOT_DONE;
+        SET_ERROR_ON_RETURN(error_status,
+                            IVE_FATALERROR,
                             ps_video_encode_op->s_ive_op.u4_error_code,
                             IV_FAIL);
     }
@@ -283,7 +306,7 @@ WORD32 ih264e_encode(iv_obj_t *ps_codec_obj, void *pv_api_ip, void *pv_api_op)
             {
                 error_status = ih264e_codec_update_config(ps_codec, ps_cfg);
                 SET_ERROR_ON_RETURN(error_status,
-                                    IVE_UNSUPPORTEDPARAM,
+                                    IVE_FATALERROR,
                                     ps_video_encode_op->s_ive_op.u4_error_code,
                                     IV_FAIL);
 
@@ -486,7 +509,7 @@ WORD32 ih264e_encode(iv_obj_t *ps_codec_obj, void *pv_api_ip, void *pv_api_op)
 
         /* error status */
         SET_ERROR_ON_RETURN(error_status,
-                            IVE_FATALERROR,
+                            IVE_UNSUPPORTEDPARAM,
                             ps_video_encode_op->s_ive_op.u4_error_code,
                             IV_FAIL);
 
@@ -504,7 +527,7 @@ WORD32 ih264e_encode(iv_obj_t *ps_codec_obj, void *pv_api_ip, void *pv_api_op)
     }
 
     /* curr pic cnt */
-     ps_codec->i4_pic_cnt += 1;
+    ps_codec->i4_pic_cnt += 1;
 
     i4_rc_pre_enc_skip = 0;
     i4_rc_pre_enc_skip = ih264e_input_queue_update(
@@ -568,13 +591,18 @@ WORD32 ih264e_encode(iv_obj_t *ps_codec_obj, void *pv_api_ip, void *pv_api_op)
 
         ih264_list_reset(ps_codec->pv_entropy_jobq);
 
+        error_status = ih264e_update_rc_post_enc(ps_codec, ctxt_sel, (ps_codec->i4_poc == 0));
+        SET_ERROR_ON_RETURN(error_status,
+                            ((error_status == IH264E_BITSTREAM_BUFFER_OVERFLOW) ?
+                                            IVE_UNSUPPORTEDPARAM : IVE_FATALERROR),
+                            ps_video_encode_op->s_ive_op.u4_error_code, IV_FAIL);
+
         if (ps_codec->s_cfg.u4_enable_quality_metrics & QUALITY_MASK_PSNR)
         {
             ih264e_compute_quality_stats(ps_proc);
         }
 
     }
-
 
    /****************************************************************************
    * RECON
@@ -691,7 +719,6 @@ WORD32 ih264e_encode(iv_obj_t *ps_codec_obj, void *pv_api_ip, void *pv_api_op)
         }
     }
 
-
     /***************************************************************************
      * Free reference buffers:
      * In case of a post enc skip, we have to ensure that those pics will not
@@ -770,7 +797,6 @@ WORD32 ih264e_encode(iv_obj_t *ps_codec_obj, void *pv_api_ip, void *pv_api_op)
         }
     }
 
-
     /**************************************************************************
      * Signaling to APP
      *  1) If we valid a valid output mark it so
@@ -799,7 +825,6 @@ WORD32 ih264e_encode(iv_obj_t *ps_codec_obj, void *pv_api_ip, void *pv_api_op)
         ps_video_encode_op->s_ive_op.u4_timestamp_low = s_inp_buf.u4_timestamp_low;
         ps_video_encode_op->s_ive_op.u4_timestamp_high = s_inp_buf.u4_timestamp_high;
 
-
         switch (ps_codec->pic_type)
         {
             case PIC_IDR:
@@ -825,12 +850,12 @@ WORD32 ih264e_encode(iv_obj_t *ps_codec_obj, void *pv_api_ip, void *pv_api_op)
 
         for (i = 0; i < (WORD32)ps_codec->s_cfg.u4_num_cores; i++)
         {
-            error_status = ps_codec->as_process[ctxt_sel + i].i4_error_code;
-            SET_ERROR_ON_RETURN(error_status,
-                                IVE_FATALERROR,
-                                ps_video_encode_op->s_ive_op.u4_error_code,
-                                IV_FAIL);
+            error_status |= ps_codec->as_process[ctxt_sel + i].i4_error_code;
         }
+        SET_ERROR_ON_RETURN(error_status,
+                            ((error_status == IH264E_BITSTREAM_BUFFER_OVERFLOW) ?
+                                            IVE_UNSUPPORTEDPARAM : IVE_FATALERROR),
+                            ps_video_encode_op->s_ive_op.u4_error_code, IV_FAIL);
     }
     else
     {
