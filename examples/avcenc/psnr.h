@@ -17,54 +17,38 @@
  *****************************************************************************
  * Originally developed and contributed by Ittiam Systems Pvt. Ltd, Bangalore
 */
+
 /**
 *******************************************************************************
 * @file
-*  ih264_resi_trans.h
+*  psnr.h
 *
 * @brief
-*  Functions declarations for residue and forward transform
-*
-* @par List of Functions:
-*  - ih264_resi_trans_ft
-*  - ih264_resi_trans_4x4
-*  - ih264_resi_trans_4x4
-*  - ih264_resi_trans_4x4_a9
-*  - ih264_resi_trans_4x4_a9
+*  Contains declarations of functions for psnr computation
 *
 * @author
-*  Ittiam
+*  ittiam
 *
 * @remarks
-*  None
+*  none
 *
 *******************************************************************************
 */
 
-#ifndef IH264_RESI_TRANS_H_
-#define IH264_RESI_TRANS_H_
+#ifndef  _PSNR_H_
+#define  _PSNR_H_
 
 /*****************************************************************************/
-/* Extern Function Declarations                                              */
+/*  Function Declarations                                                    */
 /*****************************************************************************/
+void init_psnr(app_ctxt_t *ps_app_ctxt);
 
-typedef void ih264_resi_trans_ft(UWORD8 *pu1_src,
-                                 UWORD8 *pu1_pred,
-                                 WORD32 *pi4_out,
-                                 WORD32 src_strd,
-                                 WORD32 pred_strd,
-                                 WORD32 out_strd);
+void compute_psnr(app_ctxt_t *ps_app_ctxt,
+                  iv_raw_buf_t *ps_buf1,
+                  iv_raw_buf_t *ps_buf2);
 
-/*C functions*/
+void print_average_psnr(app_ctxt_t *ps_app_ctxt);
 
-ih264_resi_trans_ft ih264_resi_trans_4x4;
+#endif /* _PSNR_H_ */
 
-ih264_resi_trans_ft ih264_resi_trans_8x8;
 
-/*A9 functions*/
-
-ih264_resi_trans_ft ih264_resi_trans_4x4_a9;
-
-ih264_resi_trans_ft ih264_resi_trans_8x8_a9;
-
-#endif /* IH264_RESI_TRANS_H_ */
