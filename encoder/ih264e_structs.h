@@ -30,25 +30,23 @@
 *  Harish
 *
 * @remarks
-*  None
+*  none
 *
 *******************************************************************************
 */
 
-#ifndef IH264E_STRUCTS_H_
-#define IH264E_STRUCTS_H_
+#ifndef _IH264E_STRUCTS_H_
+#define _IH264E_STRUCTS_H_
 
 /*****************************************************************************/
 /* Structure definitions                                                    */
 /*****************************************************************************/
 
-/* Early declaration of structs */
 typedef struct _codec_t codec_t;
 typedef struct _proc_t process_ctxt_t;
 
-
 /*****************************************************************************/
-/* Extern Function type definitions                                          */
+/* Function type definitions                                                 */
 /*****************************************************************************/
 
 /**
@@ -1705,6 +1703,7 @@ struct _proc_t
      * mb cost
      */
     WORD32 i4_mb_cost;
+    WORD32 i4_mb_intra_cost;
 
     /********************************************************************/
     /* i4_ngbr_avbl_mb_16 - ngbr avbl of curr mb                        */
@@ -2254,6 +2253,11 @@ struct _codec_t
     WORD32 i4_frame_num;
 
     /**
+     * frame num backup (used in post enc skip case)
+     */
+    WORD32 i4_restore_frame_num;
+
+    /**
      *  slice_type
      */
     WORD32  i4_slice_type;
@@ -2581,6 +2585,12 @@ struct _codec_t
     UWORD16 *pu2_intr_rfrsh_map;
 
     /*
+     * Intra MB Cost Map
+     * Stores the intra cost of all mb of a frame
+     */
+    WORD32 *pi4_mb_intra_cost;
+
+    /*
      * Indicates if the current frame is used as a reference frame
      */
     UWORD32 u4_is_curr_frm_ref;
@@ -2862,4 +2872,4 @@ struct _codec_t
 
 };
 
-#endif /* IH264E_STRUCTS_H_ */
+#endif /* _IH264E_STRUCTS_H_ */
