@@ -230,6 +230,8 @@ typedef struct
     WORD32  quit;
     WORD32  paused;
 
+    /* Active threads present*/
+    UWORD32 i4_active_threads;
 
     void *pv_disp_ctx;
     void *display_thread_handle;
@@ -280,6 +282,8 @@ typedef enum
     SOC,
     PICLEN,
     PICLEN_FILE,
+
+    KEEP_THREADS_ACTIVE,
 } ARGUMENT_T;
 
 typedef struct
@@ -349,6 +353,8 @@ static const argument_t argument_mapping[] =
          "Set Architecture. Supported values  ARM_NONEON, ARM_A9Q, ARM_A7, ARM_A5, ARM_NEONINTR,ARMV8_GENERIC, X86_GENERIC, X86_SSSE3, X86_SSE4 \n" },
     {"--",  "--soc", SOC,
          "Set SOC. Supported values  GENERIC, HISI_37X \n" },
+    {"--", "--keep_threads_active", KEEP_THREADS_ACTIVE,
+        "Keep threads active"},
 
 };
 
@@ -873,6 +879,7 @@ IV_API_CALL_STATUS_T get_version(void *codec_obj)
 /*****************************************************************************/
 void codec_exit(CHAR *pc_err_message)
 {
+    printf("Summary\n");
     printf("%s\n", pc_err_message);
     exit(-1);
 }
@@ -1354,6 +1361,9 @@ void parse_argument(vid_dec_ctx_t *ps_app_ctx, CHAR *argument, CHAR *value)
             break;
         case DISABLE_DEBLOCK_LEVEL:
             sscanf(value, "%d", &ps_app_ctx->u4_disable_dblk_level);
+            break;
+        case KEEP_THREADS_ACTIVE:
+            sscanf(value, "%d", &ps_app_ctx->i4_active_threads);
             break;
 
         case INVALID:
@@ -2154,6 +2164,7 @@ int main(WORD32 argc, CHAR *argv[])
     //s_app_ctx.u4_output_present = 0;
     s_app_ctx.u4_chksum_save_flag = 0;
     s_app_ctx.u4_frame_info_enable = 0;
+    s_app_ctx.i4_active_threads = 1;
 
     s_app_ctx.get_stride = &default_get_stride;
 
@@ -2424,6 +2435,7 @@ int main(WORD32 argc, CHAR *argv[])
             s_create_ip.s_ivd_create_ip_t.u4_size = sizeof(ih264d_create_ip_t);
             s_create_op.s_ivd_create_op_t.u4_size = sizeof(ih264d_create_op_t);
             s_create_ip.u4_enable_frame_info = s_app_ctx.u4_frame_info_enable;
+            s_create_ip.u4_keep_threads_active = s_app_ctx.i4_active_threads;
 
 
 
