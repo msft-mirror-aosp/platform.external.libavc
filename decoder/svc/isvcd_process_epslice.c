@@ -158,11 +158,13 @@ WORD32 isvcd_interlyr_motion_mode_pred(svc_dec_lyr_struct_t *ps_svc_lyr_dec,
         /* get the current layer ctxt */
         ps_lyr_mem = &ps_ctxt->as_res_lyr_mem[ps_ctxt->i4_res_id];
 
-        ps_ctxt->i4_listx = i4_listx;
+        {
+            ps_ctxt->i4_listx = i4_listx;
 
-        i4_mb_mode =
-            ps_lyr_mem->pf_inter_lyr_pred(ps_svc_lyr_dec->pv_mode_mv_sample_ctxt, ps_cur_mb_info,
+            i4_mb_mode =
+                ps_lyr_mem->pf_inter_lyr_pred(ps_svc_lyr_dec->pv_mode_mv_sample_ctxt, ps_cur_mb_info,
                                           ps_svc_cur_mb_info, ps_dec, ps_mb_part_info, ps_part);
+        }
     }
     return i4_mb_mode;
 }
@@ -485,6 +487,7 @@ WORD32 isvcd_mv_pred_ref_tfr_nby2_epmb(dec_struct_t *ps_dec, UWORD8 u1_mb_idx, U
             }
         }
     }
+
     return OK;
 }
 /*!

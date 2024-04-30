@@ -2619,7 +2619,7 @@ WORD32 isvcd_allocate_static_bufs(iv_obj_t **dec_hdl, void *pv_api_ip, void *pv_
         ps_svc_lyr_dec->u1_dyadic_flag = 1;
         ps_svc_lyr_dec->u1_restricted_res_change_flag = 1;
         ps_svc_lyr_dec->u1_base_res_flag = 1;
-        ps_svc_lyr_dec->u1_ref_layer_id = 0;
+        ps_svc_lyr_dec->u1_ref_layer_id = u1_layer_id - 1;
         ps_svc_lyr_dec->ps_dec_svc_ref_layer =
             &ps_svcd_ctxt->ps_svc_dec_lyr[ps_svc_lyr_dec->u1_ref_layer_id];
         ps_svc_lyr_dec->u4_pps_id_for_layer = UINT32_MAX;
@@ -4435,6 +4435,15 @@ WORD32 isvcd_dec_non_vcl(void *pv_out_non_vcl, void *pv_seq_params, void *pv_pic
                 {
                     ps_dec->i4_header_decoded |= 0x1;
                     ps_svcd_ctxt->u4_num_sps_ctr++;
+
+                    if(ps_svcd_ctxt->pic_width < ps_svc_lyr_dec->pic_width)
+                    {
+                        ps_svcd_ctxt->pic_width = ps_svc_lyr_dec->pic_width;
+                    }
+                    if(ps_svcd_ctxt->pic_height < ps_svc_lyr_dec->pic_height)
+                    {
+                        ps_svcd_ctxt->pic_height = ps_svc_lyr_dec->pic_height;
+                    }
                 }
 
                 if(i_status) return i_status;
@@ -4448,6 +4457,15 @@ WORD32 isvcd_dec_non_vcl(void *pv_out_non_vcl, void *pv_seq_params, void *pv_pic
                 {
                     ps_svcd_ctxt->u4_num_sps_ctr++;
                     ps_dec->i4_header_decoded |= 0x1;
+
+                    if(ps_svcd_ctxt->pic_width < ps_svc_lyr_dec->pic_width)
+                    {
+                        ps_svcd_ctxt->pic_width = ps_svc_lyr_dec->pic_width;
+                    }
+                    if(ps_svcd_ctxt->pic_height < ps_svc_lyr_dec->pic_height)
+                    {
+                        ps_svcd_ctxt->pic_height = ps_svc_lyr_dec->pic_height;
+                    }
                 }
                 if(i_status) return i_status;
 
@@ -5183,6 +5201,7 @@ WORD32 isvcd_video_decode(iv_obj_t *dec_hdl, void *pv_api_ip, void *pv_api_op)
                 UWORD8 u1_layer_nal_data_present = 0;
                 ps_svcd_ctxt->u1_cur_layer_id = u1_res_id;
                 ps_svc_lyr_dec = ps_svcd_ctxt->ps_svc_dec_lyr + u1_res_id;
+                ps_svc_lyr_dec->u1_res_init_done = 0;
                 ps_dec = &ps_svc_lyr_dec->s_dec;
 
                 ps_dec->i4_decode_header = ps_dec_zero_lyr->i4_decode_header;
@@ -5319,7 +5338,7 @@ WORD32 isvcd_video_decode(iv_obj_t *dec_hdl, void *pv_api_ip, void *pv_api_op)
                     ps_dec = &ps_svc_lyr_dec->s_dec;
 
                     if((0 == ps_svcd_ctxt->u4_num_sps_ctr) || (0 == ps_svcd_ctxt->u4_num_pps_ctr) ||
-                       (NULL == ps_dec->ps_cur_pps))
+                       (NULL == ps_dec->ps_cur_pps) || (ps_svc_lyr_dec->u1_res_init_done == 0))
                     {
                         ps_svcd_ctxt->u1_exit_till_next_IDR = 1;
                         ps_dec_op->u4_error_code = ERROR_UNKNOWN_NAL;
@@ -6085,16 +6104,8 @@ WORD32 isvcd_get_buf_info(iv_obj_t *dec_hdl, void *pv_api_ip, void *pv_api_op)
 
     if(ps_dec->i4_header_decoded == 3)
     {
-        if(0 == ps_dec->u4_share_disp_buf)
-        {
-            pic_wd = ps_dec->u2_disp_width;
-            pic_ht = ps_dec->u2_disp_height;
-        }
-        else
-        {
-            pic_wd = ps_dec->u2_frm_wd_y;
-            pic_ht = ps_dec->u2_frm_ht_y;
-        }
+        pic_wd = ps_svcd_ctxt->pic_width;
+        pic_ht = ps_svcd_ctxt->pic_height;
     }
 
     for(i = 0; i < ps_ctl_op->u4_min_num_in_bufs; i++)

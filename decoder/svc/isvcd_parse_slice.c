@@ -703,6 +703,14 @@ WORD32 isvcd_parse_decode_slice_ext_nal(UWORD8 u1_is_idr_slice, UWORD8 u1_nal_re
         return ERROR_CORRUPTED_SLICE;
     }
 
+    if(ps_dec->u4_first_slice_in_pic == 1)
+    {
+        if(u2_first_mb_in_slice != 0)
+        {
+            return ERROR_CORRUPTED_SLICE;
+        }
+    }
+
     COPYTHECONTEXT("Slice Header SVC ext: first_mb_in_slice", u2_first_mb_in_slice);
 
     u4_temp = ih264d_uev(pu4_bitstrm_ofst, pu4_bitstrm_buf);
@@ -1202,8 +1210,13 @@ WORD32 isvcd_parse_decode_slice_ext_nal(UWORD8 u1_is_idr_slice, UWORD8 u1_nal_re
             else
                 ps_dec->u4_output_present = 1;
         }
+        ret = isvcd_parse_interlayer_resamp_func_init(ps_svc_lyr_dec, u2_first_mb_in_slice);
+        if(ret != OK)
+        {
+            return ERROR_CORRUPTED_SLICE;
+        }
         if((ps_dec->u1_separate_parse == 1) &&
-           (ps_svc_lyr_dec->u1_layer_identifier == TARGET_LAYER))
+           (ps_svc_lyr_dec->u1_layer_identifier == TARGET_LAYER) && (ps_svc_lyr_dec->u1_res_init_done == 1))
         {
             if(ps_dec->u4_dec_thread_created == 0)
             {
@@ -1635,11 +1648,14 @@ WORD32 isvcd_parse_slice_header(svc_dec_lyr_struct_t *ps_svc_lyr_dec)
         {
             return ERROR_INV_SLICE_HDR_T;
         }
+        /* Reference layer id update is taken care during resolution init */
+        /*
         ps_svc_lyr_dec->u1_ref_layer_id = ps_svc_slice_params->u4_ref_layer_dq_id >> 4;
         if(ps_svc_lyr_dec->u1_ref_layer_id >= ps_svc_lyr_dec->u1_layer_id)
         {
             return ERROR_INV_SLICE_HDR_T;
         }
+        */
         ps_svc_lyr_dec->ps_dec_svc_ref_layer =
             &ps_svcd_ctxt->ps_svc_dec_lyr[ps_svc_lyr_dec->u1_ref_layer_id];
 
@@ -1684,6 +1700,11 @@ WORD32 isvcd_parse_slice_header(svc_dec_lyr_struct_t *ps_svc_lyr_dec)
         ps_svc_slice_params->u1_constrained_intra_resampling_flag = ih264d_get_bit_h264(ps_bitstrm);
         COPYTHECONTEXT("Slice Header SVC ext: u1_constrained_intra_resampling_flag",
                        ps_svc_slice_params->u1_constrained_intra_resampling_flag);
+
+        ps_svc_lyr_dec->s_res_prms.i1_constrained_intra_rsmpl_flag =
+            ps_svc_lyr_dec->s_svc_slice_params.u1_constrained_intra_resampling_flag;
+        isvcd_intra_resamp_res_init_update_flags(ps_svc_lyr_dec);
+
         if(2 == ps_sps_svc_ext->u1_extended_spatial_scalability_idc)
         {
             /* ChromaArrayType = i4_chroma_format_idc  if  separate_colour_plane_flag
@@ -1924,6 +1945,14 @@ WORD32 isvcd_parse_decode_slice(UWORD8 u1_is_idr_slice, UWORD8 u1_nal_ref_idc,
        (ps_dec->u4_first_slice_in_pic == 0))
     {
         return ERROR_CORRUPTED_SLICE;
+    }
+
+    if(ps_dec->u4_first_slice_in_pic == 1)
+    {
+        if(u2_first_mb_in_slice != 0)
+        {
+            return ERROR_CORRUPTED_SLICE;
+        }
     }
 
     COPYTHECONTEXT("SH: first_mb_in_slice", u2_first_mb_in_slice);
@@ -2421,7 +2450,12 @@ WORD32 isvcd_parse_decode_slice(UWORD8 u1_is_idr_slice, UWORD8 u1_nal_ref_idc,
             else
                 ps_dec->u4_output_present = 1;
         }
-        if(ps_dec->u1_separate_parse == 1)
+        ret = isvcd_parse_interlayer_resamp_func_init(ps_svc_lyr_dec, u2_first_mb_in_slice);
+        if(ret != OK)
+        {
+            return ERROR_CORRUPTED_SLICE;
+        }
+        if((ps_dec->u1_separate_parse == 1) && (ps_svc_lyr_dec->u1_res_init_done == 1))
         {
             if(ps_dec->u4_dec_thread_created == 0)
             {

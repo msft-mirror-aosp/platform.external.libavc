@@ -660,6 +660,9 @@ typedef struct _SvcDecLyrStruct
     WORD32 i4_frm_svc_base_mode_cabac_size;
     UWORD32 u4_pps_id_for_layer;
     UWORD8 u1_error_in_cur_frame;
+    UWORD8 u1_res_init_done;
+    WORD32 pic_width;
+    WORD32 pic_height;
 } svc_dec_lyr_struct_t;
 
 typedef struct
@@ -719,6 +722,8 @@ typedef struct
     UWORD8 u1_parse_nal_unit_error;
     UWORD8 u1_exit_till_next_IDR;
     UWORD8 u1_pre_parse_in_flush;
+    WORD32 pic_width;
+    WORD32 pic_height;
 } svc_dec_ctxt_t;
 
 #endif /*_ISVCD_STRUCTS_H_*/
