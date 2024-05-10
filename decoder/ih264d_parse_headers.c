@@ -125,6 +125,16 @@ void ih264d_get_pre_sei_params(dec_struct_t *ps_dec, UWORD8 u1_nal_unit_type)
         ps_dec->ps_sei->u1_sei_ave_params_present_flag =
                         ps_dec->ps_sei_parse->u1_sei_ave_params_present_flag;
         ps_dec->ps_sei->s_sei_ave_params = ps_dec->ps_sei_parse->s_sei_ave_params;
+        ps_dec->ps_sei->u1_sei_sii_params_present_flag =
+            ps_dec->ps_sei_parse->u1_sei_sii_params_present_flag;
+        ps_dec->ps_sei->s_sei_sii_params = ps_dec->ps_sei_parse->s_sei_sii_params;
+    }
+
+    if(NULL != ps_dec->ps_sei)
+    {
+        ps_dec->ps_sei->u1_sei_fgc_params_present_flag =
+            ps_dec->ps_sei_parse->u1_sei_fgc_params_present_flag;
+        ps_dec->ps_sei->s_sei_fgc_params = ps_dec->ps_sei_parse->s_sei_fgc_params;
     }
 
     ps_dec->ps_sei_parse->u1_sei_mdcv_params_present_flag = 0;
@@ -135,7 +145,8 @@ void ih264d_get_pre_sei_params(dec_struct_t *ps_dec, UWORD8 u1_nal_unit_type)
     memset(&ps_dec->ps_sei_parse->s_sei_ave_params, 0, sizeof(sei_ave_params_t));
     ps_dec->ps_sei_parse->u1_sei_ccv_params_present_flag = 0;
     memset(&ps_dec->ps_sei_parse->s_sei_ccv_params, 0, sizeof(sei_ccv_params_t));
-
+    ps_dec->ps_sei_parse->u1_sei_sii_params_present_flag = 0;
+    memset(&ps_dec->ps_sei_parse->s_sei_sii_params, 0, sizeof(sei_sii_params_t));
 }
 
 /*****************************************************************************/
@@ -1084,6 +1095,20 @@ WORD32 ih264d_parse_sps(dec_struct_t *ps_dec, dec_bit_stream_t *ps_bitstrm)
         ret = ih264d_parse_vui_parametres(&ps_seq->s_vui, ps_bitstrm);
         if(ret != OK)
             return ret;
+
+        if (ps_dec->pu1_bits_buf_dynamic != NULL) {
+            vui_t *ps_vui = &ps_seq->s_vui;
+            dec_seq_params_t *ps_sps_old = ps_dec->ps_sps;
+            vui_t *ps_vui_old = &ps_sps_old->s_vui;
+
+            if (ps_vui->u1_video_full_range_flag != ps_vui_old->u1_video_full_range_flag ||
+                ps_vui->u1_colour_primaries != ps_vui_old->u1_colour_primaries ||
+                ps_vui->u1_tfr_chars != ps_vui_old->u1_tfr_chars ||
+                ps_vui->u1_matrix_coeffs != ps_vui_old->u1_matrix_coeffs) {
+                ps_dec->u1_res_changed = 1;
+                return IVD_RES_CHANGED;
+            }
+        }
     }
 
     /* Compare older num_reorder_frames with the new one if header is already decoded */

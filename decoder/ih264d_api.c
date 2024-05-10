@@ -155,6 +155,10 @@ WORD32 ih264d_get_sei_ccv_params(iv_obj_t *dec_hdl,
                                  void *pv_api_ip,
                                  void *pv_api_op);
 
+WORD32 ih264d_get_sei_sii_params(iv_obj_t *dec_hdl, void *pv_api_ip, void *pv_api_op);
+
+WORD32 ih264d_get_sei_fgc_params(iv_obj_t *dec_hdl, void *pv_api_ip, void *pv_api_op);
+
 WORD32 ih264d_set_num_cores(iv_obj_t *dec_hdl, void *pv_api_ip, void *pv_api_op);
 
 WORD32 ih264d_deblock_display(dec_struct_t *ps_dec);
@@ -192,6 +196,8 @@ void ih264d_export_sei_params(ivd_sei_decode_op_t *ps_sei_decode_op, dec_struct_
     i4_status = ih264d_export_sei_cll_params(ps_sei_decode_op, ps_sei, &ps_dec->s_sei_export);
     i4_status = ih264d_export_sei_ave_params(ps_sei_decode_op, ps_sei, &ps_dec->s_sei_export);
     i4_status = ih264d_export_sei_ccv_params(ps_sei_decode_op, ps_sei, &ps_dec->s_sei_export);
+    i4_status = ih264d_export_sei_sii_params(ps_sei_decode_op, ps_sei, &ps_dec->s_sei_export);
+    i4_status = ih264d_export_sei_fgc_params(ps_sei_decode_op, ps_sei, &ps_dec->s_sei_export);
 
     UNUSED(i4_status);
 }
@@ -484,9 +490,10 @@ static IV_API_CALL_STATUS_T api_check_struct_sanity(iv_obj_t *ps_handle,
                                  ps_ip->s_ivd_video_decode_ip_t.u4_num_Bytes);
             ps_op->s_ivd_video_decode_op_t.u4_error_code = 0;
 
-            if(ps_ip->s_ivd_video_decode_ip_t.u4_size
-                            != sizeof(ih264d_video_decode_ip_t)&&
-                            ps_ip->s_ivd_video_decode_ip_t.u4_size != offsetof(ivd_video_decode_ip_t, s_out_buffer))
+            if(ps_ip->s_ivd_video_decode_ip_t.u4_size != sizeof(ih264d_video_decode_ip_t) &&
+               ps_ip->s_ivd_video_decode_ip_t.u4_size != sizeof(ivd_video_decode_ip_t) &&
+               ps_ip->s_ivd_video_decode_ip_t.u4_size !=
+                   offsetof(ivd_video_decode_ip_t, s_out_buffer))
             {
                 ps_op->s_ivd_video_decode_op_t.u4_error_code |= 1
                                 << IVD_UNSUPPORTEDPARAM;
@@ -495,9 +502,10 @@ static IV_API_CALL_STATUS_T api_check_struct_sanity(iv_obj_t *ps_handle,
                 return (IV_FAIL);
             }
 
-            if(ps_op->s_ivd_video_decode_op_t.u4_size
-                            != sizeof(ih264d_video_decode_op_t)&&
-                            ps_op->s_ivd_video_decode_op_t.u4_size != offsetof(ivd_video_decode_op_t, u4_output_present))
+            if(ps_op->s_ivd_video_decode_op_t.u4_size != sizeof(ih264d_video_decode_op_t) &&
+               ps_op->s_ivd_video_decode_op_t.u4_size != sizeof(ivd_video_decode_op_t) &&
+               ps_op->s_ivd_video_decode_op_t.u4_size !=
+                   offsetof(ivd_video_decode_op_t, u4_output_present))
             {
                 ps_op->s_ivd_video_decode_op_t.u4_error_code |= 1
                                 << IVD_UNSUPPORTEDPARAM;
@@ -940,6 +948,56 @@ static IV_API_CALL_STATUS_T api_check_struct_sanity(iv_obj_t *ps_handle,
                     break;
                 }
 
+                case IH264D_CMD_CTL_GET_SEI_SII_PARAMS:
+                {
+                    ih264d_ctl_get_sei_sii_params_ip_t *ps_ip;
+                    ih264d_ctl_get_sei_sii_params_op_t *ps_op;
+
+                    ps_ip = (ih264d_ctl_get_sei_sii_params_ip_t *) pv_api_ip;
+                    ps_op = (ih264d_ctl_get_sei_sii_params_op_t *) pv_api_op;
+
+                    if(ps_ip->u4_size != sizeof(ih264d_ctl_get_sei_sii_params_ip_t))
+                    {
+                        ps_op->u4_error_code |= 1 << IVD_UNSUPPORTEDPARAM;
+                        ps_op->u4_error_code |= IVD_IP_API_STRUCT_SIZE_INCORRECT;
+                        return IV_FAIL;
+                    }
+
+                    if(ps_op->u4_size != sizeof(ih264d_ctl_get_sei_sii_params_op_t))
+                    {
+                        ps_op->u4_error_code |= 1 << IVD_UNSUPPORTEDPARAM;
+                        ps_op->u4_error_code |= IVD_OP_API_STRUCT_SIZE_INCORRECT;
+                        return IV_FAIL;
+                    }
+
+                    break;
+                }
+
+                case IH264D_CMD_CTL_GET_SEI_FGC_PARAMS:
+                {
+                    ih264d_ctl_get_sei_fgc_params_ip_t *ps_ip;
+                    ih264d_ctl_get_sei_fgc_params_op_t *ps_op;
+
+                    ps_ip = (ih264d_ctl_get_sei_fgc_params_ip_t *) pv_api_ip;
+                    ps_op = (ih264d_ctl_get_sei_fgc_params_op_t *) pv_api_op;
+
+                    if(ps_ip->u4_size != sizeof(ih264d_ctl_get_sei_fgc_params_ip_t))
+                    {
+                        ps_op->u4_error_code |= 1 << IVD_UNSUPPORTEDPARAM;
+                        ps_op->u4_error_code |= IVD_IP_API_STRUCT_SIZE_INCORRECT;
+                        return IV_FAIL;
+                    }
+
+                    if(ps_op->u4_size != sizeof(ih264d_ctl_get_sei_fgc_params_op_t))
+                    {
+                        ps_op->u4_error_code |= 1 << IVD_UNSUPPORTEDPARAM;
+                        ps_op->u4_error_code |= IVD_OP_API_STRUCT_SIZE_INCORRECT;
+                        return IV_FAIL;
+                    }
+
+                    break;
+                }
+
                 case IH264D_CMD_CTL_SET_NUM_CORES:
                 {
                     ih264d_ctl_set_num_cores_ip_t *ps_ip;
@@ -1331,6 +1389,46 @@ void ih264d_init_decoder(void * ps_dec_params)
     ps_dec->init_done = 1;
 
 }
+
+WORD32 ih264d_join_threads(dec_struct_t *ps_dec)
+{
+    if(ps_dec->i4_threads_active)
+    {
+        /* Wait for threads */
+        ps_dec->i4_break_threads = 1;
+        if(ps_dec->u4_dec_thread_created)
+        {
+            ithread_mutex_lock(ps_dec->apv_proc_start_mutex[0]);
+
+            ps_dec->ai4_process_start[0] = PROC_START;
+
+            ithread_cond_signal(ps_dec->apv_proc_start_condition[0]);
+
+            ithread_mutex_unlock(ps_dec->apv_proc_start_mutex[0]);
+
+            ithread_join(ps_dec->pv_dec_thread_handle, NULL);
+
+            ps_dec->u4_dec_thread_created = 0;
+        }
+
+        if(ps_dec->u4_bs_deblk_thread_created)
+        {
+            ithread_mutex_lock(ps_dec->apv_proc_start_mutex[1]);
+
+            ps_dec->ai4_process_start[1] = PROC_START;
+
+            ithread_cond_signal(ps_dec->apv_proc_start_condition[1]);
+
+            ithread_mutex_unlock(ps_dec->apv_proc_start_mutex[1]);
+
+            ithread_join(ps_dec->pv_bs_deblk_thread_handle, NULL);
+
+            ps_dec->u4_bs_deblk_thread_created = 0;
+        }
+    }
+    return IV_SUCCESS;
+}
+
 WORD32 ih264d_free_static_bufs(iv_obj_t *dec_hdl)
 {
     dec_struct_t *ps_dec;
@@ -1342,56 +1440,28 @@ WORD32 ih264d_free_static_bufs(iv_obj_t *dec_hdl)
     pf_aligned_free = ps_dec->pf_aligned_free;
     pv_mem_ctxt = ps_dec->pv_mem_ctxt;
 
-#ifdef KEEP_THREADS_ACTIVE
-    /* Wait for threads */
-    ps_dec->i4_break_threads = 1;
-    if(ps_dec->u4_dec_thread_created)
+    if(ps_dec->i4_threads_active)
     {
-        ithread_mutex_lock(ps_dec->apv_proc_start_mutex[0]);
 
-        ps_dec->ai4_process_start[0] = PROC_START;
+        ih264d_join_threads(ps_dec);
 
-        ithread_cond_signal(ps_dec->apv_proc_start_condition[0]);
-
-        ithread_mutex_unlock(ps_dec->apv_proc_start_mutex[0]);
-
-        ithread_join(ps_dec->pv_dec_thread_handle, NULL);
-
-        ps_dec->u4_dec_thread_created = 0;
-    }
-
-    if(ps_dec->u4_bs_deblk_thread_created)
-    {
-        ithread_mutex_lock(ps_dec->apv_proc_start_mutex[1]);
-
-        ps_dec->ai4_process_start[1] = PROC_START;
-
-        ithread_cond_signal(ps_dec->apv_proc_start_condition[1]);
-
-        ithread_mutex_unlock(ps_dec->apv_proc_start_mutex[1]);
-
-        ithread_join(ps_dec->pv_bs_deblk_thread_handle, NULL);
-
-        ps_dec->u4_bs_deblk_thread_created = 0;
-    }
-
-    // destroy mutex and condition variable for both the threads
-    // 1. ih264d_decode_picture_thread
-    // 2. ih264d_recon_deblk_thread
-    {
-        UWORD32 i;
-        for(i = 0; i < 2; i++)
+        // destroy mutex and condition variable for both the threads
+        // 1. ih264d_decode_picture_thread
+        // 2. ih264d_recon_deblk_thread
         {
-            ithread_cond_destroy(ps_dec->apv_proc_start_condition[i]);
-            ithread_cond_destroy(ps_dec->apv_proc_done_condition[i]);
+            UWORD32 i;
+            for(i = 0; i < 2; i++)
+            {
+                ithread_cond_destroy(ps_dec->apv_proc_start_condition[i]);
+                ithread_cond_destroy(ps_dec->apv_proc_done_condition[i]);
 
-            ithread_mutex_destroy(ps_dec->apv_proc_start_mutex[i]);
-            ithread_mutex_destroy(ps_dec->apv_proc_done_mutex[i]);
+                ithread_mutex_destroy(ps_dec->apv_proc_start_mutex[i]);
+                ithread_mutex_destroy(ps_dec->apv_proc_done_mutex[i]);
+            }
         }
+        PS_DEC_ALIGNED_FREE(ps_dec, ps_dec->apv_proc_start_mutex[0]);
+        PS_DEC_ALIGNED_FREE(ps_dec, ps_dec->apv_proc_start_condition[0]);
     }
-    PS_DEC_ALIGNED_FREE(ps_dec, ps_dec->apv_proc_start_mutex[0]);
-    PS_DEC_ALIGNED_FREE(ps_dec, ps_dec->apv_proc_start_condition[0]);
-#endif
 
     PS_DEC_ALIGNED_FREE(ps_dec, ps_dec->ps_sps);
     PS_DEC_ALIGNED_FREE(ps_dec, ps_dec->ps_pps);
@@ -1509,6 +1579,7 @@ WORD32 ih264d_allocate_static_bufs(iv_obj_t **dec_hdl, void *pv_api_ip, void *pv
     ps_dec->pf_aligned_alloc = pf_aligned_alloc;
     ps_dec->pf_aligned_free = pf_aligned_free;
     ps_dec->pv_mem_ctxt = pv_mem_ctxt;
+    ps_dec->i4_threads_active = ps_create_ip->u4_keep_threads_active;
 
 
     size = ((sizeof(dec_seq_params_t)) * MAX_NUM_SEQ_PARAMS);
@@ -1535,7 +1606,7 @@ WORD32 ih264d_allocate_static_bufs(iv_obj_t **dec_hdl, void *pv_api_ip, void *pv
     memset(pv_buf, 0, size);
     ps_dec->pv_bs_deblk_thread_handle = pv_buf;
 
-#ifdef KEEP_THREADS_ACTIVE
+    if(ps_dec->i4_threads_active)
     {
         UWORD32 i;
         /* Request memory to hold mutex (start/done) for both threads */
@@ -1586,7 +1657,6 @@ WORD32 ih264d_allocate_static_bufs(iv_obj_t **dec_hdl, void *pv_api_ip, void *pv
             RETURN_IF((ret != IV_SUCCESS), ret);
         }
     }
-#endif
 
     size = sizeof(dpb_manager_t);
     pv_buf = pf_aligned_alloc(pv_mem_ctxt, 128, size);
@@ -1922,6 +1992,8 @@ UWORD32 ih264d_map_error(UWORD32 i4_err_status)
         case ERROR_INV_SEI_CLL_PARAMS:
         case ERROR_INV_SEI_AVE_PARAMS:
         case ERROR_INV_SEI_CCV_PARAMS:
+        case ERROR_INV_SEI_SII_PARAMS:
+
             temp = 1 << IVD_CORRUPTEDHEADER;
             break;
 
@@ -2106,7 +2178,7 @@ WORD32 ih264d_video_decode(iv_obj_t *dec_hdl, void *pv_api_ip, void *pv_api_op)
     {
         UWORD32 u4_size;
         u4_size = ps_dec_op->u4_size;
-        memset(ps_h264d_dec_op, 0, sizeof(ih264d_video_decode_op_t));
+        memset(ps_h264d_dec_op, 0, ps_dec_op->u4_size);
         ps_dec_op->u4_size = u4_size;
     }
 
@@ -2137,7 +2209,7 @@ WORD32 ih264d_video_decode(iv_obj_t *dec_hdl, void *pv_api_ip, void *pv_api_op)
     }
     ps_dec->u1_pic_decode_done = 0;
 
-#ifdef KEEP_THREADS_ACTIVE
+    if(ps_dec->i4_threads_active)
     {
         UWORD32 i;
         ps_dec->i4_break_threads = 0;
@@ -2152,10 +2224,10 @@ WORD32 ih264d_video_decode(iv_obj_t *dec_hdl, void *pv_api_ip, void *pv_api_op)
             RETURN_IF((ret != IV_SUCCESS), ret);
         }
     }
-#else
-    ps_dec->u4_dec_thread_created = 0;
-    ps_dec->u4_bs_deblk_thread_created = 0;
-#endif
+    else {
+        ps_dec->u4_dec_thread_created = 0;
+        ps_dec->u4_bs_deblk_thread_created = 0;
+    }
 
     ps_dec_op->u4_num_bytes_consumed = 0;
     ps_dec_op->i4_reorder_depth = -1;
@@ -2221,7 +2293,7 @@ WORD32 ih264d_video_decode(iv_obj_t *dec_hdl, void *pv_api_ip, void *pv_api_op)
 
     ps_dec->u4_slice_start_code_found = 0;
 
-    /* In case the deocder is not in flush mode(in shared mode),
+    /* In case the decoder is not in flush mode(in shared mode),
      then decoder has to pick up a buffer to write current frame.
      Check if a frame is available in such cases */
 
@@ -2782,12 +2854,13 @@ WORD32 ih264d_video_decode(iv_obj_t *dec_hdl, void *pv_api_ip, void *pv_api_op)
     }
 
     /* close deblock thread if it is not closed yet*/
-#ifndef KEEP_THREADS_ACTIVE
-    if(ps_dec->u4_num_cores == 3)
+    if(!ps_dec->i4_threads_active)
     {
-        ih264d_signal_bs_deblk_thread(ps_dec);
+        if(ps_dec->u4_num_cores == 3)
+        {
+            ih264d_signal_bs_deblk_thread(ps_dec);
+        }
     }
-#endif
 
 
     {
@@ -3092,6 +3165,7 @@ WORD32 ih264d_set_flush_mode(iv_obj_t *dec_hdl, void *pv_api_ip, void *pv_api_op
     ps_ctl_op->u4_error_code = 0;
 
     ps_dec = (dec_struct_t *)(dec_hdl->pv_codec_handle);
+    ih264d_join_threads(ps_dec);
     UNUSED(pv_api_ip);
     /* ! */
     /* Signal flush frame control call */
@@ -3611,6 +3685,7 @@ WORD32 ih264d_reset(iv_obj_t *dec_hdl, void *pv_api_ip, void *pv_api_op)
 
     if(ps_dec != NULL)
     {
+        ih264d_join_threads(ps_dec);
         ih264d_init_decoder(ps_dec);
     }
     else
@@ -3723,6 +3798,14 @@ WORD32 ih264d_ctl(iv_obj_t *dec_hdl, void *pv_api_ip, void *pv_api_op)
             ret = ih264d_get_sei_ccv_params(dec_hdl, (void *)pv_api_ip,
                                             (void *)pv_api_op);
             break;
+        case IH264D_CMD_CTL_GET_SEI_SII_PARAMS:
+            ret = ih264d_get_sei_sii_params(dec_hdl, (void *) pv_api_ip, (void *) pv_api_op);
+            break;
+
+        case IH264D_CMD_CTL_GET_SEI_FGC_PARAMS:
+            ret = ih264d_get_sei_fgc_params(dec_hdl, (void *) pv_api_ip, (void *) pv_api_op);
+            break;
+
         case IH264D_CMD_CTL_SET_PROCESSOR:
             ret = ih264d_set_processor(dec_hdl, (void *)pv_api_ip,
                                        (void *)pv_api_op);
@@ -4245,6 +4328,196 @@ WORD32 ih264d_get_sei_ccv_params(iv_obj_t *dec_hdl,
         }
     }
 
+    return IV_SUCCESS;
+}
+
+/*****************************************************************************/
+/*                                                                           */
+/*  Function Name : ih264d_get_sei_sii_params                                */
+/*                                                                           */
+/*  Description   : This function populates SEI sii message in               */
+/*                     output structure                                      */
+/*  Inputs        : iv_obj_t decoder handle                                  */
+/*                : pv_api_ip pointer to input structure                     */
+/*                : pv_api_op pointer to output structure                    */
+/*  Outputs       :                                                          */
+/*  Returns       : returns 0; 1 with error code when SII is not present     */
+/*                                                                           */
+/*  Issues        : none                                                     */
+/*                                                                           */
+/*  Revision History:                                                        */
+/*                                                                           */
+/*         DD MM YYYY   Author(s)       Changes (Describe the changes made)  */
+/*                                                                           */
+/*                                                                           */
+/*****************************************************************************/
+WORD32 ih264d_get_sei_sii_params(iv_obj_t *dec_hdl, void *pv_api_ip, void *pv_api_op)
+{
+    ih264d_ctl_get_sei_sii_params_ip_t *ps_ip;
+    ih264d_ctl_get_sei_sii_params_op_t *ps_op;
+    dec_struct_t *ps_dec = dec_hdl->pv_codec_handle;
+    sei_sii_params_t *ps_sei_sii;
+    int i;
+
+    ps_ip = (ih264d_ctl_get_sei_sii_params_ip_t *) pv_api_ip;
+    ps_op = (ih264d_ctl_get_sei_sii_params_op_t *) pv_api_op;
+    UNUSED(ps_ip);
+
+    if(0 == ps_dec->s_sei_export.u1_sei_sii_params_present_flag)
+    {
+        ps_op->u4_error_code = ERROR_SEI_SII_PARAMS_NOT_FOUND;
+        return IV_FAIL;
+    }
+
+    ps_sei_sii = &ps_dec->s_sei_export.s_sei_sii_params;
+
+    if((ps_sei_sii->u4_sii_sub_layer_idx > 0) &&
+       (ps_sei_sii->u1_fixed_shutter_interval_within_cvs_flag == 1))
+    {
+        ps_op->u4_error_code = ERROR_INV_SEI_SII_PARAMS;
+        return IV_FAIL;
+    }
+
+    if((ps_sei_sii->u4_sii_sub_layer_idx > ps_sei_sii->u1_sii_max_sub_layers_minus1) &&
+       (ps_sei_sii->u1_fixed_shutter_interval_within_cvs_flag == 0))
+    {
+        ps_op->u4_error_code = ERROR_INV_SEI_SII_PARAMS;
+        return IV_FAIL;
+    }
+
+    ps_op->u4_sii_sub_layer_idx = ps_sei_sii->u4_sii_sub_layer_idx;
+
+    if(0 == ps_op->u4_sii_sub_layer_idx)
+    {
+        ps_op->u1_shutter_interval_info_present_flag =
+            ps_sei_sii->u1_shutter_interval_info_present_flag;
+
+        if(1 == ps_sei_sii->u1_shutter_interval_info_present_flag)
+        {
+            ps_op->u4_sii_time_scale = ps_sei_sii->u4_sii_time_scale;
+            ps_op->u1_fixed_shutter_interval_within_cvs_flag =
+                ps_sei_sii->u1_fixed_shutter_interval_within_cvs_flag;
+
+            if(1 == ps_sei_sii->u1_fixed_shutter_interval_within_cvs_flag)
+            {
+                ps_op->u4_sii_num_units_in_shutter_interval =
+                    ps_sei_sii->u4_sii_num_units_in_shutter_interval;
+            }
+            else
+            {
+                ps_op->u1_sii_max_sub_layers_minus1 = ps_sei_sii->u1_sii_max_sub_layers_minus1;
+                for(i = 0; i <= ps_sei_sii->u1_sii_max_sub_layers_minus1; i++)
+                {
+                    ps_op->au4_sub_layer_num_units_in_shutter_interval[i] =
+                        ps_sei_sii->au4_sub_layer_num_units_in_shutter_interval[i];
+                }
+            }
+        }
+    }
+
+    return IV_SUCCESS;
+}
+
+/*****************************************************************************/
+/*                                                                           */
+/*  Function Name : ih264d_get_sei_fgc_params                                */
+/*                                                                           */
+/*  Description   : This function populates SEI FGC message in               */
+/*                     output structure                                      */
+/*  Inputs        : iv_obj_t decoder handle                                  */
+/*                : pv_api_ip pointer to input structure                     */
+/*                : pv_api_op pointer to output structure                    */
+/*  Outputs       :                                                          */
+/*  Returns       : returns 0; 1 with error code when FGC is not present     */
+/*                                                                           */
+/*  Issues        : none                                                     */
+/*                                                                           */
+/*  Revision History:                                                        */
+/*                                                                           */
+/*         DD MM YYYY   Author(s)       Changes (Describe the changes made)  */
+/*                                                                           */
+/*                                                                           */
+/*****************************************************************************/
+WORD32 ih264d_get_sei_fgc_params(iv_obj_t *dec_hdl, void *pv_api_ip, void *pv_api_op)
+{
+    ih264d_ctl_get_sei_fgc_params_ip_t *ps_ip;
+    ih264d_ctl_get_sei_fgc_params_op_t *ps_op;
+    dec_struct_t *ps_dec = dec_hdl->pv_codec_handle;
+    sei_fgc_params_t *ps_sei_fgc;
+    WORD32 i4_count;
+    UWORD32 c, i, j;
+
+    ps_ip = (ih264d_ctl_get_sei_fgc_params_ip_t *) pv_api_ip;
+    ps_op = (ih264d_ctl_get_sei_fgc_params_op_t *) pv_api_op;
+    UNUSED(ps_ip);
+
+    if(0 == ps_dec->s_sei_export.u1_sei_fgc_params_present_flag)
+    {
+        ps_op->u4_error_code = ERROR_SEI_FGC_PARAMS_NOT_FOUND;
+        return IV_FAIL;
+    }
+
+    ps_sei_fgc = &ps_dec->s_sei_export.s_sei_fgc_params;
+
+    ps_op->u1_film_grain_characteristics_cancel_flag =
+        ps_sei_fgc->u1_film_grain_characteristics_cancel_flag;
+
+    if(0 == ps_op->u1_film_grain_characteristics_cancel_flag)
+    {
+        ps_op->i4_poc = ps_sei_fgc->i4_poc;
+        ps_op->u4_idr_pic_id = ps_sei_fgc->u4_idr_pic_id;
+        ps_op->u1_film_grain_model_id = ps_sei_fgc->u1_film_grain_model_id;
+        ps_op->u1_separate_colour_description_present_flag =
+            ps_sei_fgc->u1_separate_colour_description_present_flag;
+
+        if(ps_op->u1_separate_colour_description_present_flag)
+        {
+            ps_op->u1_film_grain_bit_depth_luma_minus8 =
+                ps_sei_fgc->u1_film_grain_bit_depth_luma_minus8;
+            ps_op->u1_film_grain_bit_depth_chroma_minus8 =
+                ps_sei_fgc->u1_film_grain_bit_depth_chroma_minus8;
+            ps_op->u1_film_grain_full_range_flag = ps_sei_fgc->u1_film_grain_full_range_flag;
+            ps_op->u1_film_grain_colour_primaries = ps_sei_fgc->u1_film_grain_colour_primaries;
+            ps_op->u1_film_grain_transfer_characteristics =
+                ps_sei_fgc->u1_film_grain_transfer_characteristics;
+            ps_op->u1_film_grain_matrix_coefficients =
+                ps_sei_fgc->u1_film_grain_matrix_coefficients;
+        }
+        ps_op->u1_blending_mode_id = ps_sei_fgc->u1_blending_mode_id;
+        ps_op->u1_log2_scale_factor = ps_sei_fgc->u1_log2_scale_factor;
+
+        for(c = 0; c < SEI_FGC_NUM_COLOUR_COMPONENTS; c++)
+        {
+            ps_op->au1_comp_model_present_flag[c] = ps_sei_fgc->au1_comp_model_present_flag[c];
+        }
+
+        for(c = 0; c < SEI_FGC_NUM_COLOUR_COMPONENTS; c++)
+        {
+            if(ps_op->au1_comp_model_present_flag[c])
+            {
+                ps_op->au1_num_intensity_intervals_minus1[c] =
+                    ps_sei_fgc->au1_num_intensity_intervals_minus1[c];
+
+                ps_op->au1_num_model_values_minus1[c] = ps_sei_fgc->au1_num_model_values_minus1[c];
+
+                for(i = 0; i <= ps_op->au1_num_intensity_intervals_minus1[c]; i++)
+                {
+                    ps_op->au1_intensity_interval_lower_bound[c][i] =
+                        ps_sei_fgc->au1_intensity_interval_lower_bound[c][i];
+                    ps_op->au1_intensity_interval_upper_bound[c][i] =
+                        ps_sei_fgc->au1_intensity_interval_upper_bound[c][i];
+
+                    for(j = 0; j <= ps_op->au1_num_model_values_minus1[c]; j++)
+                    {
+                        ps_op->ai4_comp_model_value[c][i][j] =
+                            ps_sei_fgc->ai4_comp_model_value[c][i][j];
+                    }
+                }
+            }
+        }
+        ps_op->u4_film_grain_characteristics_repetition_period =
+            ps_sei_fgc->u4_film_grain_characteristics_repetition_period;
+    }
     return IV_SUCCESS;
 }
 

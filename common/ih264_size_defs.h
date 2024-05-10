@@ -17,23 +17,26 @@
  *****************************************************************************
  * Originally developed and contributed by Ittiam Systems Pvt. Ltd, Bangalore
 */
-/**
- *******************************************************************************
- * @file
- *  ih264_size_defs.h
- *
- * @brief
- *  Contains declaration of global variables for H264 transform , quant and inverse quant
- *
- * @author
- *  Ittiam
- *
- * @remarks
- *
- ********************************************************************************/
 
-#ifndef IH264_SIZE_DEFS_H_
-#define IH264_SIZE_DEFS_H_
+/**
+*******************************************************************************
+* @file
+*  ih264_size_defs.h
+*
+* @brief
+*  Contains macro definitions used in h264 transform, quant and inverse quant
+*
+* @author
+*  ittiam
+*
+* @remarks
+*  none
+*
+*******************************************************************************
+*/
+
+#ifndef _IH264_SIZE_DEFS_H_
+#define _IH264_SIZE_DEFS_H_
 
 /*****************************************************************************/
 /* Constant Macros                                                           */
@@ -43,6 +46,8 @@
 
 /*Width of a 4x4 block*/
 #define SUB_BLK_WIDTH_4x4                   4
+
+#define SUB_BLK_HEIGHT_4x4                  4
 
 /*Width of an 8x8 block*/
 #define SUB_BLK_WIDTH_8x8                   8
@@ -82,4 +87,4 @@
 #define SIZE_TMP_BUFF_ITRANS                ((SUB_BLK_WIDTH_4x4*SUB_BLK_WIDTH_4x4) +\
                                              (SUB_BLK_WIDTH_4x4*SUB_BLK_WIDTH_4x4))
 
-#endif /* IH264_DEFS_H_ */
+#endif /* _IH264_SIZE_DEFS_H_ */

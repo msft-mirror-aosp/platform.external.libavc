@@ -30,13 +30,17 @@
 *  ittiam
 *
 * @remarks
-*  None
+*  none
 *
 *******************************************************************************
 */
 
-#ifndef IH264E_ERROR_H_
-#define IH264E_ERROR_H_
+#ifndef _IH264E_ERROR_H_
+#define _IH264E_ERROR_H_
+
+/*****************************************************************************/
+/* Function Macros                                                           */
+/*****************************************************************************/
 
 /**
 ******************************************************************************
@@ -47,9 +51,13 @@
     if (error != IH264E_SUCCESS) \
     {\
         out_status = ((1 << severity) | error);\
-        return (ret_code);\
+        ps_codec->i4_error_code = out_status;\
+        if (severity == IVE_FATALERROR) return (ret_code);\
     }
 
+/*****************************************************************************/
+/* Enums                                                                     */
+/*****************************************************************************/
 
 /**
 ******************************************************************************
@@ -241,10 +249,16 @@ typedef enum
     /**Invalid content color volume sei params */
     IH264E_INVALID_SEI_CCV_PARAMS                                   = IH264E_CODEC_ERROR_START + 0x36,
 
+    /**Invalid shutter interval info sei params */
+    IH264E_INVALID_SEI_SII_PARAMS = IH264E_CODEC_ERROR_START + 0x37,
+
+    /**Invalid shutter interval info sei params. Does not match H264 sii spec requirements*/
+    IH264E_SEI_SII_FAILED_TO_MATCH_SPEC_COND = IH264E_CODEC_ERROR_START + 0x38,
+
     /**max failure error code to ensure enum is 32 bits wide */
     IH264E_FAIL                                                     = -1,
 
 }IH264E_ERROR_T;
 
 
-#endif /* IH264E_ERROR_H_ */
+#endif /* _IH264E_ERROR_H_ */

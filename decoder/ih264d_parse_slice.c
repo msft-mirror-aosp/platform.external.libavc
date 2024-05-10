@@ -459,6 +459,14 @@ WORD32 ih264d_start_of_pic(dec_struct_t *ps_dec,
         ps_dec->ps_cur_pic = ps_cur_pic;
         ps_dec->u1_pic_buf_id = cur_pic_buf_id;
         ps_cur_pic->u4_ts = ps_dec->u4_ts;
+
+        /* Update POC and inter_pic_id in sei structure,
+         * later can be used by application for grain synthesis(SMPTE-RDD5) */
+        if(ps_dec->ps_sei->u1_sei_fgc_params_present_flag)
+        {
+            ps_dec->ps_sei->s_sei_fgc_params.i4_poc = i4_poc;
+            ps_dec->ps_sei->s_sei_fgc_params.u4_idr_pic_id = ps_cur_slice->u4_idr_pic_id;
+        }
         memcpy(&ps_cur_pic->s_sei_pic, ps_dec->ps_sei, sizeof(sei));
 
         ps_cur_pic->u1_mv_buf_id = cur_mv_buf_id;
@@ -1154,7 +1162,10 @@ WORD32 ih264d_parse_decode_slice(UWORD8 u1_is_idr_slice,
 
         if(ps_dec->ps_cur_sps->u1_gaps_in_frame_num_value_allowed_flag)
         {
-            ih264d_decode_gaps_in_frame_num(ps_dec, u2_frame_num);
+            ret = ih264d_decode_gaps_in_frame_num(ps_dec, u2_frame_num);
+            if (ret != OK) {
+                return ERROR_DBP_MANAGER_T;
+            }
         }
 
         ps_prev_poc->i4_prev_frame_num_ofst = ps_cur_poc->i4_prev_frame_num_ofst;
@@ -1583,17 +1594,18 @@ WORD32 ih264d_parse_decode_slice(UWORD8 u1_is_idr_slice,
 
                 ps_dec->u4_dec_thread_created = 1;
             }
-#ifdef KEEP_THREADS_ACTIVE
-            ret = ithread_mutex_lock(ps_dec->apv_proc_start_mutex[0]);
-            RETURN_IF((ret != IV_SUCCESS), ret);
+            if(ps_dec->i4_threads_active)
+            {
+                ret = ithread_mutex_lock(ps_dec->apv_proc_start_mutex[0]);
+                RETURN_IF((ret != IV_SUCCESS), ret);
 
-            ps_dec->ai4_process_start[0] = PROC_START;
-            ret = ithread_cond_signal(ps_dec->apv_proc_start_condition[0]);
-            RETURN_IF((ret != IV_SUCCESS), ret);
+                ps_dec->ai4_process_start[0] = PROC_START;
+                ret = ithread_cond_signal(ps_dec->apv_proc_start_condition[0]);
+                RETURN_IF((ret != IV_SUCCESS), ret);
 
-            ret = ithread_mutex_unlock(ps_dec->apv_proc_start_mutex[0]);
-            RETURN_IF((ret != IV_SUCCESS), ret);
-#endif
+                ret = ithread_mutex_unlock(ps_dec->apv_proc_start_mutex[0]);
+                RETURN_IF((ret != IV_SUCCESS), ret);
+            }
 
             if((ps_dec->u4_num_cores == 3) &&
                             ((ps_dec->u4_app_disable_deblk_frm == 0) || ps_dec->i1_recon_in_thread3_flag)
@@ -1605,20 +1617,21 @@ WORD32 ih264d_parse_decode_slice(UWORD8 u1_is_idr_slice,
                                (void *)ps_dec);
                 ps_dec->u4_bs_deblk_thread_created = 1;
             }
-#ifdef KEEP_THREADS_ACTIVE
-            if (ps_dec->u4_bs_deblk_thread_created)
+            if(ps_dec->i4_threads_active)
             {
-                ret = ithread_mutex_lock(ps_dec->apv_proc_start_mutex[1]);
-                RETURN_IF((ret != IV_SUCCESS), ret);
+                if (ps_dec->u4_bs_deblk_thread_created)
+                {
+                    ret = ithread_mutex_lock(ps_dec->apv_proc_start_mutex[1]);
+                    RETURN_IF((ret != IV_SUCCESS), ret);
 
-                ps_dec->ai4_process_start[1] = PROC_START;
-                ret = ithread_cond_signal(ps_dec->apv_proc_start_condition[1]);
-                RETURN_IF((ret != IV_SUCCESS), ret);
+                    ps_dec->ai4_process_start[1] = PROC_START;
+                    ret = ithread_cond_signal(ps_dec->apv_proc_start_condition[1]);
+                    RETURN_IF((ret != IV_SUCCESS), ret);
 
-                ret = ithread_mutex_unlock(ps_dec->apv_proc_start_mutex[1]);
-                RETURN_IF((ret != IV_SUCCESS), ret);
+                    ret = ithread_mutex_unlock(ps_dec->apv_proc_start_mutex[1]);
+                    RETURN_IF((ret != IV_SUCCESS), ret);
+                }
             }
-#endif
         }
 
     }

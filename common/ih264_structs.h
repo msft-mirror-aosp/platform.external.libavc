@@ -19,23 +19,21 @@
 */
 
 /**
- *******************************************************************************
- * @file
- *  ih264_structs.h
- *
- * @brief
- *  Structure definitions used in the code
- *
- * @author
- *  Ittiam
- *
- * @par List of Functions:
- *
- * @remarks
- *  None
- *
- *******************************************************************************
- */
+*******************************************************************************
+* @file
+*  ih264_structs.h
+*
+* @brief
+*  Structure definitions used in the code
+*
+* @author
+*  ittiam
+*
+* @remarks
+*  none
+*
+*******************************************************************************
+*/
 
 #ifndef _IH264_STRUCTS_H_
 #define _IH264_STRUCTS_H_
@@ -569,16 +567,16 @@ typedef struct
     UWORD8 u1_cpb_cnt_minus1;
 
     /**
-    * (together with bit_rate_value_minus1) specifies the
-    * maximum input bit rate of the i-th CPB
-    */
+     * (together with bit_rate_value_minus1) specifies the
+     * maximum input bit rate of the i-th CPB
+     */
     UWORD32 u4_bit_rate_scale;
 
     /**
-    * (together with cpb_size_du_value_minus1) specifies
-    * CPB size of the i-th CPB when the CPB operates
-    * at the access unit level
-    */
+     * (together with cpb_size_du_value_minus1) specifies
+     * CPB size of the i-th CPB when the CPB operates
+     * at the access unit level
+     */
     UWORD32 u4_cpb_size_scale;
 
     /**
@@ -600,18 +598,18 @@ typedef struct
 
 
     /**
-    * specifies the length, in bits for initial cpb delay (nal/vcl)syntax in bp sei
-    */
+     * specifies the length, in bits for initial cpb delay (nal/vcl)syntax in bp sei
+     */
     UWORD8  u1_initial_cpb_removal_delay_length_minus1;
 
     /**
-    * specifies the length, in bits for the cpb delay syntax in pt_sei
-    */
+     * specifies the length, in bits for the cpb delay syntax in pt_sei
+     */
     UWORD8  u1_cpb_removal_delay_length_minus1;
 
     /**
-    * specifies the length, in bits, of the pic_dpb_output_delay syntax element in the pt SEI message
-    */
+     * specifies the length, in bits, of the pic_dpb_output_delay syntax element in the pt SEI message
+     */
     UWORD8  u1_dpb_output_delay_length_minus1;
 
     /**
@@ -628,104 +626,104 @@ typedef struct
 typedef struct
 {
     /**
-    *  indicates the presence of aspect_ratio
-    */
+     *  indicates the presence of aspect_ratio
+     */
     UWORD8 u1_aspect_ratio_info_present_flag;
 
     /**
-    *  specifies the aspect ratio of the luma samples
-    */
+     *  specifies the aspect ratio of the luma samples
+     */
     UWORD8 u1_aspect_ratio_idc;
 
     /**
-    *  width of the luma samples. user dependent
-    */
+     *  width of the luma samples. user dependent
+     */
     UWORD16 u2_sar_width;
 
     /**
-    *  Height of the luma samples. user dependent
-    */
+     *  Height of the luma samples. user dependent
+     */
     UWORD16 u2_sar_height;
 
     /**
-    * if 1, specifies that the overscan_appropriate_flag is present
-    * if 0, the preferred display method for the video signal is unspecified
-    */
+     * if 1, specifies that the overscan_appropriate_flag is present
+     * if 0, the preferred display method for the video signal is unspecified
+     */
     UWORD8 u1_overscan_info_present_flag;
 
     /**
-    * if 1,indicates that the cropped decoded pictures output
-    * are suitable for display using overscan
-    */
+     * if 1,indicates that the cropped decoded pictures output
+     * are suitable for display using overscan
+     */
     UWORD8 u1_overscan_appropriate_flag;
 
     /**
-    * if 1 specifies that video_format, video_full_range_flag and
-    * colour_description_present_flag are present
-    */
+     * if 1 specifies that video_format, video_full_range_flag and
+     * colour_description_present_flag are present
+     */
     UWORD8 u1_video_signal_type_present_flag;
 
     /**
-    * pal, secam, ntsc, ...
-    */
+     * pal, secam, ntsc, ...
+     */
     UWORD8 u1_video_format;
 
     /**
-    * indicates the black level and range of the luma and chroma signals
-    */
+     * indicates the black level and range of the luma and chroma signals
+     */
     UWORD8 u1_video_full_range_flag;
 
     /**
-    * if 1,to 1 specifies that colour_primaries, transfer_characteristics
-    * and matrix_coefficients are present
-    */
+     * if 1,to 1 specifies that colour_primaries, transfer_characteristics
+     * and matrix_coefficients are present
+     */
     UWORD8 u1_colour_description_present_flag;
 
     /**
-    * indicates the chromaticity coordinates of the source primaries
-    */
+     * indicates the chromaticity coordinates of the source primaries
+     */
     UWORD8 u1_colour_primaries;
 
     /**
-    * indicates the opto-electronic transfer characteristic of the source picture
-    */
+     * indicates the opto-electronic transfer characteristic of the source picture
+     */
     UWORD8 u1_transfer_characteristics;
 
     /**
-    * the matrix coefficients used in deriving luma and chroma signals
-    * from the green, blue, and red primaries
-    */
+     * the matrix coefficients used in deriving luma and chroma signals
+     * from the green, blue, and red primaries
+     */
     UWORD8 u1_matrix_coefficients;
 
     /**
-    * if 1, specifies that chroma_sample_loc_type_top_field and
-    * chroma_sample_loc_type_bottom_field are present
-    */
+     * if 1, specifies that chroma_sample_loc_type_top_field and
+     * chroma_sample_loc_type_bottom_field are present
+     */
     UWORD8 u1_chroma_loc_info_present_flag;
 
     /**
-    * location of chroma samples
-    */
+     * location of chroma samples
+     */
     UWORD8 u1_chroma_sample_loc_type_top_field;
 
     UWORD8 u1_chroma_sample_loc_type_bottom_field;
 
     /**
-    *   Indicates the presence of the
-    *   num_units_in_ticks, time_scale flag
-    */
+     *   Indicates the presence of the
+     *   num_units_in_ticks, time_scale flag
+     */
     UWORD8 u1_vui_timing_info_present_flag;
 
     /**
-    *   Number of units that
-    *   correspond to one increment of the
-    *   clock. Indicates the  resolution
-    */
+     *   Number of units that
+     *   correspond to one increment of the
+     *   clock. Indicates the  resolution
+     */
     UWORD32 u4_vui_num_units_in_tick;
 
     /**
-    *   The number of time units that pass in one second
-    */
+     *   The number of time units that pass in one second
+     */
     UWORD32 u4_vui_time_scale;
 
     /**
@@ -764,37 +762,37 @@ typedef struct
     UWORD8 u1_pic_struct_present_flag;
 
     /**
-    * 1, specifies that the following cvs bitstream restriction parameters are present
-    */
+     * 1, specifies that the following cvs bitstream restriction parameters are present
+     */
     UWORD8 u1_bitstream_restriction_flag;
 
     /**
-    * if 0, indicates that no pel outside the pic boundaries and
-    * no sub-pels derived using pels outside the pic boundaries is used for inter prediction
-    */
+     * if 0, indicates that no pel outside the pic boundaries and
+     * no sub-pels derived using pels outside the pic boundaries is used for inter prediction
+     */
     UWORD8 u1_motion_vectors_over_pic_boundaries_flag;
 
     /**
-    * Indicates a number of bytes not exceeded by the sum of the sizes of the VCL NAL units
-    * associated with any coded picture
-    */
+     * Indicates a number of bytes not exceeded by the sum of the sizes of the VCL NAL units
+     * associated with any coded picture
+     */
     UWORD8 u1_max_bytes_per_pic_denom;
 
     /**
-    *  Indicates an upper bound for the number of bits of coding_unit() data
-    */
+     *  Indicates an upper bound for the number of bits of coding_unit() data
+     */
     UWORD8 u1_max_bits_per_mb_denom;
 
     /**
-    * Indicate the maximum absolute value of a decoded horizontal MV component
-    * in quarter-pel luma units
-    */
+     * Indicate the maximum absolute value of a decoded horizontal MV component
+     * in quarter-pel luma units
+     */
     UWORD8 u1_log2_max_mv_length_horizontal;
 
     /**
-    * Indicate the maximum absolute value of a decoded vertical MV component
-    * in quarter-pel luma units
-    */
+     * Indicate the maximum absolute value of a decoded vertical MV component
+     * in quarter-pel luma units
+     */
     UWORD8 u1_log2_max_mv_length_vertical;
 
     /**
@@ -805,7 +803,7 @@ typedef struct
     /**
      * specifies required size of the HRD DPB in units of frame buffers.
      */
-     UWORD8 u1_max_dec_frame_buffering;
+    UWORD8 u1_max_dec_frame_buffering;
 
 } vui_t;
 
@@ -820,16 +818,24 @@ typedef struct
      */
     UWORD8 u1_profile_idc;
 
-    /** constraint_set0_flag */
+    /**
+     * constraint_set0_flag
+     */
     UWORD8 u1_constraint_set0_flag;
 
-    /** constraint_set1_flag */
+    /**
+     * constraint_set1_flag
+     */
     UWORD8 u1_constraint_set1_flag;
 
-    /** constraint_set2_flag */
+    /**
+     * constraint_set2_flag
+     */
     UWORD8 u1_constraint_set2_flag;
 
-    /** constraint_set3_flag */
+    /**
+     * constraint_set3_flag
+     */
     UWORD8 u1_constraint_set3_flag;
 
     /**
@@ -1180,7 +1186,9 @@ typedef struct
  */
 typedef struct
 {
-    /* memory management control operation command */
+    /*
+     * memory management control operation command
+     */
     UWORD8 u1_memory_management_control_operation;
 
     /*
@@ -1213,10 +1221,14 @@ typedef struct
  */
 typedef struct
 {
-    /* ref_pic_list_modification_flag_l0 */
+    /*
+     * ref_pic_list_modification_flag_l0
+     */
     WORD8 i1_ref_pic_list_modification_flag_l0;
 
-    /* Modification required in list0 */
+    /*
+     * Modification required in list0
+     */
     WORD8 i1_modification_of_pic_nums_idc_l0[MAX_MODICATION_IDC];
 
     /*
@@ -1232,10 +1244,14 @@ typedef struct
      */
     UWORD8 u1_long_term_pic_num_l0[MAX_MODICATION_IDC];
 
-    /* ref_pic_list_modification_flag_l1 */
+    /*
+     * ref_pic_list_modification_flag_l1
+     */
     WORD8 i1_ref_pic_list_modification_flag_l1;
 
-    /* Modification required in list1 */
+    /*
+     * Modification required in list1
+     */
     WORD8 i1_modification_of_pic_nums_idc_l1[MAX_MODICATION_IDC];
 
     /*
@@ -1471,60 +1487,92 @@ typedef struct
      */
     WORD32 i4_abs_bottom_pic_order_cnt;
 
-    /** Flag signaling if the current slice is ref slice */
+    /**
+     * Flag signaling if the current slice is ref slice
+     */
     UWORD8 i1_nal_ref_idc;
 
-    /** Flag to indicate if the current slice is MBAFF Frame */
+    /**
+     * Flag to indicate if the current slice is MBAFF Frame
+     */
     UWORD8 u1_mbaff_frame_flag;
 
-    /** luma_log2_weight_denom */
+    /**
+     * luma_log2_weight_denom
+     */
     UWORD8 u1_luma_log2_weight_denom;
 
-    /** chroma_log2_weight_denom */
+    /**
+     * chroma_log2_weight_denom
+     */
     UWORD8 u1_chroma_log2_weight_denom;
 
-    /** luma_weight_l0_flag */
+    /**
+     * luma_weight_l0_flag
+     */
     UWORD8 au1_luma_weight_l0_flag[MAX_DPB_SIZE];
 
-    /** luma_weight_l0 : (-128, 127 )is the range of weights
-     * when weighted pred is enabled, 128 is default value */
+    /**
+     * luma_weight_l0 : (-128, 127 )is the range of weights
+     * when weighted pred is enabled, 128 is default value
+     */
     WORD16 ai2_luma_weight_l0[MAX_DPB_SIZE];
 
-    /** luma_offset_l0 : (-128, 127 )is the range of offset
-     * when weighted pred is enabled, 0 is default value */
+    /**
+     * luma_offset_l0 : (-128, 127 )is the range of offset
+     * when weighted pred is enabled, 0 is default value
+     */
     WORD8 ai1_luma_offset_l0[MAX_DPB_SIZE];
 
-    /** chroma_weight_l0_flag */
+    /**
+     * chroma_weight_l0_flag
+     */
     UWORD8 au1_chroma_weight_l0_flag[MAX_DPB_SIZE];
 
-    /** chroma_weight_l0 : (-128, 127 )is the range of weights
-     * when weighted pred is enabled, 128 is default value*/
+    /**
+     * chroma_weight_l0 : (-128, 127 )is the range of weights
+     * when weighted pred is enabled, 128 is default value
+     */
     WORD16 ai2_chroma_weight_l0[MAX_DPB_SIZE][2];
 
-    /** chroma_offset_l0 : (-128, 127 )is the range of offset
-     * when weighted pred is enabled, 0 is default value*/
+    /**
+     * chroma_offset_l0 : (-128, 127 )is the range of offset
+     * when weighted pred is enabled, 0 is default value
+     */
     WORD8 ai1_chroma_offset_l0[MAX_DPB_SIZE][2];
 
-    /** luma_weight_l0_flag */
+    /**
+     * luma_weight_l0_flag
+     */
     UWORD8 au1_luma_weight_l1_flag[MAX_DPB_SIZE];
 
-    /** luma_weight_l1 : (-128, 127 )is the range of weights
-     * when weighted pred is enabled, 128 is default value */
+    /**
+     * luma_weight_l1 : (-128, 127 )is the range of weights
+     * when weighted pred is enabled, 128 is default value
+     */
     WORD16 ai2_luma_weight_l1[MAX_DPB_SIZE];
 
-    /** luma_offset_l1 : (-128, 127 )is the range of offset
-     * when weighted pred is enabled, 0 is default value */
+    /**
+     * luma_offset_l1 : (-128, 127 )is the range of offset
+     * when weighted pred is enabled, 0 is default value
+     */
     WORD8 ai1_luma_offset_l1[MAX_DPB_SIZE];
 
-    /** chroma_weight_l1_flag */
+    /**
+     * chroma_weight_l1_flag
+     */
     UWORD8 au1_chroma_weight_l1_flag[MAX_DPB_SIZE];
 
-    /** chroma_weight_l1 : (-128, 127 )is the range of weights
-     * when weighted pred is enabled, 128 is default value */
+    /**
+     * chroma_weight_l1 : (-128, 127 )is the range of weights
+     * when weighted pred is enabled, 128 is default value
+     */
     WORD16 ai2_chroma_weight_l1[MAX_DPB_SIZE][2];
 
-    /** chroma_offset_l1 :(-128, 127 )is the range of offset
-     * when weighted pred is enabled, 0 is default value */
+    /**
+     * chroma_offset_l1 :(-128, 127 )is the range of offset
+     * when weighted pred is enabled, 0 is default value
+     */
     WORD8 ai1_chroma_offset_l1[MAX_DPB_SIZE][2];
 }slice_header_t;
 
@@ -1867,6 +1915,169 @@ typedef struct
     UWORD32 u4_ccv_avg_luminance_value;
 }sei_ccv_params_t;
 
+/**
+ * Structure to hold FGC SEI
+ */
+typedef struct
+{
+    /**
+     * Flag to control the presence of FGC SEI params
+     */
+    UWORD8 u1_film_grain_characteristics_cancel_flag;
+
+    /**
+     * Specifies the pic order count
+     */
+    WORD32 i4_poc;
+
+    /**
+     * Specifies IDR pic ID
+     */
+    UWORD32 u4_idr_pic_id;
+
+    /**
+     * Specifies film grain model for simulation
+     */
+    UWORD8 u1_film_grain_model_id;
+
+    /**
+     * Specifies separate color format for decoded samples and grain
+     */
+    UWORD8 u1_separate_colour_description_present_flag;
+
+    /**
+     * Specifies the bit depth used for the luma component
+     */
+    UWORD8 u1_film_grain_bit_depth_luma_minus8;
+
+    /**
+     * Specifies the bit depth used for the Cb and Cr components
+     */
+    UWORD8 u1_film_grain_bit_depth_chroma_minus8;
+
+    /**
+     * Specifies the colour space of the FGC in SEI
+     */
+    UWORD8 u1_film_grain_full_range_flag;
+
+    /**
+     * Specifies the colour space of the FGC in SEI
+     */
+    UWORD8 u1_film_grain_colour_primaries;
+
+    /**
+     * Specifies the colour space of the FGC in SEI
+     */
+    UWORD8 u1_film_grain_transfer_characteristics;
+
+    /**
+     * Specifies the colour space of the FGC in SEI
+     */
+    UWORD8 u1_film_grain_matrix_coefficients;
+
+    /**
+     * identifies the blending mode used to blend the simulated film grain with the decoded images
+     */
+    UWORD8 u1_blending_mode_id;
+
+    /**
+     * Specifies a scale factor used in the film grain characterization equations
+     */
+    UWORD8 u1_log2_scale_factor;
+
+    /**
+     * Indicates whether film grain is modelled or not on the colour component
+     */
+    UWORD8 au1_comp_model_present_flag[SEI_FGC_NUM_COLOUR_COMPONENTS];
+
+    /**
+     * Specifies the number of intensity intervals for which
+     * a specific set of model values has been estimated
+     */
+    UWORD8 au1_num_intensity_intervals_minus1[SEI_FGC_NUM_COLOUR_COMPONENTS];
+
+    /**
+     * Specifies the number of model values present for each intensity interval in which
+     * the film grain has been modelled
+     */
+    UWORD8 au1_num_model_values_minus1[SEI_FGC_NUM_COLOUR_COMPONENTS];
+
+    /**
+     * Specifies the lower bound of the interval of intensity levels for which
+     * the set of model values applies
+     */
+    UWORD8 au1_intensity_interval_lower_bound[SEI_FGC_NUM_COLOUR_COMPONENTS]
+                                             [SEI_FGC_MAX_NUM_INTENSITY_INTERVALS];
+
+    /**
+     * Specifies the upper bound of the interval of intensity levels for which
+     * the set of model values applies
+     */
+    UWORD8 au1_intensity_interval_upper_bound[SEI_FGC_NUM_COLOUR_COMPONENTS]
+                                             [SEI_FGC_MAX_NUM_INTENSITY_INTERVALS];
+
+    /**
+     * Represents each one of the model values present for
+     * the colour component and intensity interval
+     */
+    WORD32 ai4_comp_model_value[SEI_FGC_NUM_COLOUR_COMPONENTS][SEI_FGC_MAX_NUM_INTENSITY_INTERVALS]
+                               [SEI_FGC_MAX_NUM_MODEL_VALUES];
+
+    /**
+     * Specifies the persistence of the film grain characteristics SEI message
+     */
+    UWORD32 u4_film_grain_characteristics_repetition_period;
+
+} sei_fgc_params_t;
+
+/**
+ * Structure to hold shutter interval info SEI
+ */
+typedef struct
+{
+    /**
+     * specifies if the sei sii is enabled
+     */
+    UWORD8 u1_shutter_interval_info_present_flag;
+
+    /**
+     * specifies the shutter interval temporal sub-layer index
+     * of the current picture
+     */
+    UWORD32 u4_sii_sub_layer_idx;
+
+    /**
+     * specify the number of time units that pass in one second
+     */
+    UWORD32 u4_sii_time_scale;
+
+    /**
+     * specifies that the indicated shutter interval is the same for all
+     * pictures in the coded video sequence
+     */
+    UWORD8 u1_fixed_shutter_interval_within_cvs_flag;
+
+    /**
+     * specifies the the number of time units of a clock operating at the
+     * frequency sii_time_scale Hz that corresponds to the indicated shutter
+     * interval of each picture in the coded video sequence
+     */
+    UWORD32 u4_sii_num_units_in_shutter_interval;
+
+    /**
+     * sii_max_sub_layers_minus1 plus 1 specifies the maximum number of
+     * shutter interval temporal sub-layers indexes that may be present
+     * in the coded video sequence
+     */
+    UWORD8 u1_sii_max_sub_layers_minus1;
+
+    /*
+     * specifies the number of time units of a clock operating at the
+     * frequency sii_time_scale Hz that corresponds to the shutter
+     * interval of each picture in the coded video sequence
+     */
+    UWORD32 au4_sub_layer_num_units_in_shutter_interval[SII_MAX_SUB_LAYERS];
+} sei_sii_params_t;
 
 /**
  * Structure to hold SEI parameters Info
@@ -1912,6 +2123,26 @@ typedef struct
      * CCV parameters
      */
     sei_ccv_params_t s_sei_ccv_params;
+
+    /**
+     * film grain characteristics info present flag
+     */
+    UWORD8 u1_sei_fgc_params_present_flag;
+
+    /*
+     * Film grain parameters
+     */
+    sei_fgc_params_t s_sei_fgc_params;
+
+    /**
+     * shutter interval info present flag
+     */
+    UWORD8 u1_sei_sii_params_present_flag;
+
+    /*
+     * Shutter Interval Info parameters
+     */
+    sei_sii_params_t s_sei_sii_params;
 } sei_params_t;
 
 
