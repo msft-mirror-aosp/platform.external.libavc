@@ -18,7 +18,7 @@
  * Originally developed and contributed by Ittiam Systems Pvt. Ltd, Bangalore
 */
 #ifdef __ANDROID__
-#include <log/log.h>
+#include <android/log.h>
 #endif
 #include "ih264_typedefs.h"
 #include "ih264_macros.h"
@@ -38,6 +38,17 @@
 #include "ih264_error.h"
 #include "ih264_buf_mgr.h"
 #include "assert.h"
+
+#ifdef __ANDROID__
+#ifndef ALOG
+#define ALOG(priority, tag, ...) ((void)__android_log_print(ANDROID_##priority, tag, __VA_ARGS__))
+#define ALOGE(...) ALOG(LOG_ERROR, NULL, __VA_ARGS__)
+inline int android_errorWriteLog(int tag, const char* subTag) {
+    ALOGE("android_errorWriteLog(%x, %s)", tag, subTag);
+    return 0;
+}
+#endif
+#endif
 
 /*!
  ***************************************************************************
@@ -719,7 +730,7 @@ WORD32 ih264d_ref_idx_reordering(dec_struct_t *ps_dec, UWORD8 uc_lx)
     dpb_manager_t *ps_dpb_mgr = ps_dec->ps_dpb_mgr;
     UWORD16 u4_cur_pic_num = ps_dec->ps_cur_slice->u2_frame_num;
     /*< Maximum Picture Number Minus 1 */
-    UWORD16 ui_max_frame_num =
+    UWORD32 ui_max_frame_num =
                     ps_dec->ps_cur_sps->u2_u4_max_pic_num_minus1 + 1;
 
     WORD32 i, count = 0;
@@ -765,7 +776,7 @@ WORD32 ih264d_ref_idx_reordering(dec_struct_t *ps_dec, UWORD8 uc_lx)
             {
                 // diffPicNum is +ve
                 i_temp = (WORD32)u2_pred_frame_num + (WORD32)ui_nextUev;
-                if(i_temp >= ui_max_frame_num)
+                if(i_temp >= (WORD32)ui_max_frame_num)
                     i_temp -= ui_max_frame_num;
             }
             /* Find the dpb with the matching picNum (picNum==frameNum for framePic) */
