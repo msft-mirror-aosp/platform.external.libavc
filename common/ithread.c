@@ -234,3 +234,13 @@ WORD32 ithread_cond_signal(void *cond)
 {
     return pthread_cond_signal((pthread_cond_t *)cond);
 }
+
+UWORD32 ithread_get_cond_size(void)
+{
+    return sizeof(pthread_cond_t);
+}
+
+WORD32  ithread_cond_broadcast(void *cond)
+{
+    return pthread_cond_broadcast((pthread_cond_t *)cond);
+}

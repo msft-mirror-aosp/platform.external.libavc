@@ -136,6 +136,7 @@ class Codec {
     void setSeiCcvParams();
     void setSeiSiiParams();
     void logVersion();
+    void retrieveMemRecords();
     bool mHalfPelEnable = 1;
     bool mQPelEnable = 1;
     bool mIntra4x4 = 0;
@@ -174,6 +175,7 @@ class Codec {
     uint32_t mForceIdrInterval = 0;          // in number of frames
     uint32_t mDynamicBitRateInterval = 0;    // in number of frames
     uint32_t mDynamicFrameRateInterval = 0;  // in number of frames
+    uint32_t mKeepThreadsActive;
     uint64_t mBitrate = 6000000;
     float mFrameRate = 30;
     iv_obj_t *mCodecCtx = nullptr;
@@ -233,6 +235,7 @@ bool Codec::initEncoder(const uint8_t **pdata, size_t *psize) {
     mForceIdrInterval = data[IDX_FORCE_IDR_INTERVAL] & 0x07;
     mDynamicBitRateInterval = data[IDX_DYNAMIC_BITRATE_INTERVAL] & 0x07;
     mDynamicFrameRateInterval = data[IDX_DYNAMIC_FRAME_RATE_INTERVAL] & 0x07;
+    mKeepThreadsActive = 1;
 
     /* Getting Number of MemRecords */
     iv_num_mem_rec_ip_t sNumMemRecIp{};
@@ -279,6 +282,7 @@ bool Codec::initEncoder(const uint8_t **pdata, size_t *psize) {
     sFillMemRecIp.u4_max_reorder_cnt = 0;
     sFillMemRecIp.u4_max_srch_rng_x = 256;
     sFillMemRecIp.u4_max_srch_rng_y = 256;
+    sFillMemRecIp.u4_keep_threads_active = mKeepThreadsActive;
 
     if (IV_SUCCESS != ive_api_function(nullptr, &sFillMemRecIp, &sFillMemRecOp)) {
         return false;
@@ -326,6 +330,7 @@ bool Codec::initEncoder(const uint8_t **pdata, size_t *psize) {
     sInitIp.u4_slice_param = mSliceParam;
     sInitIp.e_arch = mArch;
     sInitIp.e_soc = SOC_GENERIC;
+    sInitIp.u4_keep_threads_active = mKeepThreadsActive;
 
     if (IV_SUCCESS != ive_api_function(mCodecCtx, &sInitIp, &sInitOp)) {
         return false;
@@ -878,6 +883,21 @@ void Codec::logVersion() {
     return;
 }
 
+void Codec::retrieveMemRecords()
+{
+    iv_retrieve_mem_rec_ip_t s_retrieve_ip{};
+    iv_retrieve_mem_rec_op_t s_retrieve_op{};
+
+    s_retrieve_ip.e_cmd = IV_CMD_RETRIEVE_MEMREC;
+    s_retrieve_ip.u4_size = sizeof(iv_retrieve_mem_rec_ip_t);
+    s_retrieve_ip.ps_mem_rec = mMemRecords;
+
+    s_retrieve_op.u4_size = sizeof(iv_retrieve_mem_rec_op_t);
+
+    ive_api_function(mCodecCtx, &s_retrieve_ip, &s_retrieve_op);
+    return;
+}
+
 void Codec::encodeFrames(const uint8_t *data, size_t size) {
     size_t frameSize = (mIvVideoColorFormat == IV_YUV_422ILE) ? (mWidth * mHeight * 2)
                                                               : ((mWidth * mHeight * 3) / 2);
@@ -982,6 +1002,7 @@ void Codec::encodeFrames(const uint8_t *data, size_t size) {
         ++numEncodeCalls;
         free(outputBuffer);
     }
+    retrieveMemRecords();
     for (const auto &buffer : inBuffers) {
         free(std::get<0>(buffer));
         if (std::get<1>(buffer)) {

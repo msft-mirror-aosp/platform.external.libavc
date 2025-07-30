@@ -661,6 +661,7 @@ static IV_STATUS_T api_check_struct_sanity(iv_obj_t *ps_handle,
                                 ps_ip->s_ive_ip.u4_max_srch_rng_x;
                 s_ip.s_ive_ip.u4_max_srch_rng_y =
                                 ps_ip->s_ive_ip.u4_max_srch_rng_y;
+                s_ip.s_ive_ip.u4_keep_threads_active = ps_ip->s_ive_ip.u4_keep_threads_active;
 
                 for (i = 0; i < MEM_REC_CNT; i++)
                 {
@@ -2857,6 +2858,15 @@ static WORD32 ih264e_init(codec_t *ps_codec)
     /* ctl mutex init */
     ithread_mutex_init(ps_codec->pv_ctl_mutex);
 
+    if (ps_codec->s_cfg.u4_keep_threads_active)
+    {
+        /* thread pool mutex init */
+        ithread_mutex_init(ps_codec->s_thread_pool.pv_thread_pool_mutex);
+
+        /* thread pool conditional init */
+        ithread_cond_init(ps_codec->s_thread_pool.pv_thread_pool_cond);
+    }
+
     /* Set encoder chroma format */
     ps_codec->e_codec_color_format =
                     (ps_cfg->e_inp_color_fmt == IV_YUV_420SP_VU) ?
@@ -3495,13 +3505,20 @@ static WORD32 ih264e_fill_num_mem_rec(void *pv_api_ip, void *pv_api_op)
     DEBUG("\nMemory record Id %d = %d \n", MEM_REC_SLICE_MAP, ps_mem_rec->u4_mem_size);
 
     /************************************************************************
-     * Request memory to hold thread handles for each processing thread     *
+     * Request memory to hold thread handles and synchronization variables  *
      ************************************************************************/
     ps_mem_rec = &ps_mem_rec_base[MEM_REC_THREAD_HANDLE];
     {
+        WORD32 thread_pool_size = 0;
         WORD32 handle_size = ithread_get_handle_size();
 
-        ps_mem_rec->u4_mem_size = MAX_PROCESS_THREADS * handle_size;
+        if (ps_ip->s_ive_ip.u4_keep_threads_active)
+        {
+            thread_pool_size += ithread_get_mutex_lock_size();
+            thread_pool_size += ithread_get_cond_size();
+        }
+
+        ps_mem_rec->u4_mem_size = thread_pool_size + (MAX_PROCESS_THREADS * handle_size);
     }
     DEBUG("\nMemory record Id %d = %d \n", MEM_REC_THREAD_HANDLE, ps_mem_rec->u4_mem_size);
 
@@ -4085,6 +4102,7 @@ static WORD32 ih264e_init_mem_rec(iv_obj_t *ps_codec_obj,
     ps_cfg->e_soc = ps_ip->s_ive_ip.e_soc;
     ps_cfg->u4_enable_recon = ps_ip->s_ive_ip.u4_enable_recon;
     ps_cfg->e_rc_mode = ps_ip->s_ive_ip.e_rc_mode;
+    ps_cfg->u4_keep_threads_active = ps_ip->s_ive_ip.u4_keep_threads_active;
 
     /* Validate params */
     if ((ps_ip->s_ive_ip.u4_max_level < MIN_LEVEL)
@@ -4419,12 +4437,21 @@ static WORD32 ih264e_init_mem_rec(iv_obj_t *ps_codec_obj,
 
     ps_mem_rec = &ps_mem_rec_base[MEM_REC_THREAD_HANDLE];
     {
+        UWORD8 *pu1_buf = (UWORD8 *)ps_mem_rec->pv_base;
         WORD32 handle_size = ithread_get_handle_size();
+
+        if (ps_ip->s_ive_ip.u4_keep_threads_active)
+        {
+            ps_codec->s_thread_pool.pv_thread_pool_mutex = (void *)pu1_buf;
+            pu1_buf += ithread_get_mutex_lock_size();
+
+            ps_codec->s_thread_pool.pv_thread_pool_cond = (void *)pu1_buf;
+            pu1_buf += ithread_get_cond_size();
+        }
 
         for (i = 0; i < MAX_PROCESS_THREADS; i++)
         {
-            ps_codec->apv_proc_thread_handle[i] = (UWORD8 *) ps_mem_rec->pv_base
-                            + (i * handle_size);
+            ps_codec->apv_proc_thread_handle[i] = (void *)(pu1_buf + (i * handle_size));
         }
     }
 
@@ -4940,8 +4967,17 @@ static WORD32 ih264e_retrieve_memrec(iv_obj_t *ps_codec_obj,
         return IV_FAIL;
     }
 
-    /* join threads upon at end of sequence */
-    ih264e_join_threads(ps_codec);
+    if (ps_codec->s_cfg.u4_keep_threads_active)
+    {
+        ih264e_thread_pool_shutdown(ps_codec);
+        ithread_cond_destroy(ps_codec->s_thread_pool.pv_thread_pool_cond);
+        ithread_mutex_destroy(ps_codec->s_thread_pool.pv_thread_pool_mutex);
+    }
+    else
+    {
+        /* join threads upon at end of sequence */
+        ih264e_join_threads(ps_codec);
+    }
 
     /* collect list of memory records used by the encoder library */
     memcpy(ps_ip->s_ive_ip.ps_mem_rec, ps_codec->ps_mem_rec_backup,
@@ -4953,7 +4989,6 @@ static WORD32 ih264e_retrieve_memrec(iv_obj_t *ps_codec_obj,
     ih264_list_free(ps_codec->pv_proc_jobq);
     ithread_mutex_destroy(ps_codec->pv_ctl_mutex);
     ithread_mutex_destroy(ps_codec->pv_entropy_mutex);
-
 
     ih264_buf_mgr_free((buf_mgr_t *)ps_codec->pv_mv_buf_mgr);
     ih264_buf_mgr_free((buf_mgr_t *)ps_codec->pv_ref_buf_mgr);
@@ -6133,6 +6168,11 @@ static WORD32 ih264e_reset(iv_obj_t *ps_codec_obj,
 
     if (ps_codec != NULL)
     {
+        if (ps_codec->s_cfg.u4_keep_threads_active)
+        {
+            /* Shutdown active threads before reinitialization */
+            ih264e_thread_pool_shutdown(ps_codec);
+        }
         ih264e_init(ps_codec);
     }
     else
