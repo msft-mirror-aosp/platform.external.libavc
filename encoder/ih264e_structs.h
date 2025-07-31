@@ -582,6 +582,9 @@ typedef struct
     /** SEI structure                                                         */
     sei_params_t                                s_sei;
 
+    /** Enabling thread pool                                                  */
+    UWORD32                                     u4_keep_threads_active;
+
 }cfg_params_t;
 
 
@@ -1154,6 +1157,47 @@ typedef struct
      UWORD32 u4_residue_bits[MAX_MB_TYPE];
 
 } entropy_ctxt_t;
+
+/**
+ ******************************************************************************
+ *  @brief     The thread_pool_t structure manages a pool of worker threads,
+ *             providing synchronization mechanisms for job scheduling, codec
+ *             processing, and controlled execution flow.
+ ******************************************************************************
+ */
+typedef struct
+{
+    /**
+     * Mutex for synchronizing access to the thread pool
+     */
+    void *pv_thread_pool_mutex;
+
+    /**
+     * Condition variable for signaling worker threads
+     */
+    void *pv_thread_pool_cond;
+
+    /**
+     * Flag indicating whether the thread pool is initialized
+     */
+    WORD32 i4_init_done;
+
+    /**
+     * Flag indicating whether the thread pool should be terminated
+     */
+    WORD32 i4_end_of_stream;
+
+    /**
+     * Flag indicating the availability of a new frame for processing
+     */
+    WORD32 i4_has_frame;
+
+    /**
+     * Number of threads currently processing tasks
+     */
+    WORD32 i4_working_threads;
+
+} thread_pool_t;
 
 /**
 ******************************************************************************
@@ -2413,6 +2457,11 @@ struct _codec_t
      * Memory for Buffer manager for output buffers
      */
      void *pv_out_buf_mgr_base;
+
+    /**
+     * Thread pool
+     */
+    thread_pool_t s_thread_pool;
 
     /**
      * Buffer manager for output buffers
