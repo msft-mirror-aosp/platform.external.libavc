@@ -97,12 +97,12 @@ WORD32 isvcd_interlyr_motion_mode_pred(svc_dec_lyr_struct_t *ps_svc_lyr_dec,
  **************************************************************************
  */
 WORD32 isvcd_parse_bmb_cabac(svc_dec_lyr_struct_t *ps_svc_lyr_dec, dec_mb_info_t *ps_cur_mb_info,
-                             dec_svc_mb_info_t *ps_svc_cur_mb_info, UWORD8 u1_mb_num,
-                             UWORD8 u1_num_mbsNby2)
+                             dec_svc_mb_info_t *ps_svc_cur_mb_info, UWORD32 u4_mb_num,
+                             UWORD32 u4_num_mbsNby2)
 {
     UWORD8 u1_cbp = 0;
     dec_struct_t *ps_dec = &ps_svc_lyr_dec->s_dec;
-    deblk_mb_t *ps_cur_deblk_mb = ps_dec->ps_deblk_mbn + u1_mb_num;
+    deblk_mb_t *ps_cur_deblk_mb = ps_dec->ps_deblk_mbn + u4_mb_num;
     const UWORD8 *puc_mb_mc_mode = (const UWORD8 *) gau1_ih264d_mb_mc_mode;
     UWORD8 u1_mb_type = ps_cur_mb_info->u1_mb_type;
     ctxt_inc_mb_info_t *p_curr_ctxt = ps_dec->ps_curr_ctxt_mb_info;
@@ -121,7 +121,7 @@ WORD32 isvcd_parse_bmb_cabac(svc_dec_lyr_struct_t *ps_svc_lyr_dec, dec_mb_info_t
     if(u1_mb_type != B_DIRECT)
     {
         ret = isvcd_parse_bmb_non_direct_cabac(ps_svc_lyr_dec, ps_cur_mb_info, ps_svc_cur_mb_info,
-                                               u1_mb_num, u1_num_mbsNby2);
+                                               u4_mb_num, u4_num_mbsNby2);
         if(ret != OK) return ret;
     }
     else
@@ -231,7 +231,7 @@ WORD32 isvcd_parse_bmb_cabac(svc_dec_lyr_struct_t *ps_svc_lyr_dec, dec_mb_info_t
  *    0 on Success and Error code otherwise
  **************************************************************************
  */
-WORD32 isvcd_mv_pred_ref_tfr_nby2_ebmb(dec_struct_t *ps_dec, UWORD8 u1_mb_idx, UWORD8 u1_num_mbs)
+WORD32 isvcd_mv_pred_ref_tfr_nby2_ebmb(dec_struct_t *ps_dec, UWORD32 u4_mb_idx, UWORD32 u4_num_mbs)
 {
     svc_dec_lyr_struct_t *ps_svc_lyr_dec = (svc_dec_lyr_struct_t *) ps_dec;
     parse_pmbarams_t *ps_mb_part_info;
@@ -247,12 +247,12 @@ WORD32 isvcd_mv_pred_ref_tfr_nby2_ebmb(dec_struct_t *ps_dec, UWORD8 u1_mb_idx, U
     WORD32 ret = 0;
     WORD16 i2_mv_x, i2_mv_y;
 
-    ps_dec->i4_submb_ofst -= (u1_num_mbs - u1_mb_idx) << 4;
+    ps_dec->i4_submb_ofst -= (u4_num_mbs - u4_mb_idx) << 4;
     ps_mb_part_info = ps_dec->ps_parse_mb_data;
     ps_part = ps_dec->ps_parse_part_params;
 
     /* N/2 Mb MvPred and Transfer Setup Loop */
-    for(i = u1_mb_idx; i < u1_num_mbs; i++, ps_mb_part_info++)
+    for(i = u4_mb_idx; i < u4_num_mbs; i++, ps_mb_part_info++)
     {
         UWORD8 u1_colz = 0;
         ps_dec->i4_submb_ofst += SUB_BLK_SIZE;
@@ -267,7 +267,7 @@ WORD32 isvcd_mv_pred_ref_tfr_nby2_ebmb(dec_struct_t *ps_dec, UWORD8 u1_mb_idx, U
         ps_dec->u2_mv_2mb[i & 0x1] = 0;
 
         /* Look for MV Prediction and Reference Transfer in Non-I Mbs */
-        if(!ps_mb_part_info->u1_isI_mb)
+        if(!ps_mb_part_info->u4_isI_mb)
         {
             UWORD8 u1_blk_no;
             WORD16 i1_ref_idx, i1_ref_idx1;
@@ -287,7 +287,7 @@ WORD32 isvcd_mv_pred_ref_tfr_nby2_ebmb(dec_struct_t *ps_dec, UWORD8 u1_mb_idx, U
 
             /* MB Level initialisations */
             ps_dec->u4_num_pmbair = i >> u1_mbaff;
-            ps_dec->u1_mb_idx_mv = i;
+            ps_dec->u4_mb_idx_mv = i;
 
             i4_mb_mode_svc = isvcd_interlyr_motion_mode_pred(
                 ps_svc_lyr_dec, ps_cur_mb_info, ps_svc_cur_mb_info, ps_mb_part_info, ps_part);
@@ -638,12 +638,12 @@ WORD32 isvcd_mv_pred_ref_tfr_nby2_ebmb(dec_struct_t *ps_dec, UWORD8 u1_mb_idx, U
 **************************************************************************
 */
 WORD32 isvcd_parse_bmb_cavlc(svc_dec_lyr_struct_t *ps_svc_lyr_dec, dec_mb_info_t *ps_cur_mb_info,
-                             dec_svc_mb_info_t *ps_svc_cur_mb_info, UWORD8 u1_mb_num,
-                             UWORD8 u1_num_mbsNby2)
+                             dec_svc_mb_info_t *ps_svc_cur_mb_info, UWORD32 u4_mb_num,
+                             UWORD32 u4_num_mbsNby2)
 {
     UWORD32 u4_cbp = 0;
     dec_struct_t *ps_dec = &ps_svc_lyr_dec->s_dec;
-    deblk_mb_t *ps_cur_deblk_mb = ps_dec->ps_deblk_mbn + u1_mb_num;
+    deblk_mb_t *ps_cur_deblk_mb = ps_dec->ps_deblk_mbn + u4_mb_num;
     dec_bit_stream_t *const ps_bitstrm = ps_dec->ps_bitstrm;
     UWORD32 *pu4_bitstrm_buf = ps_bitstrm->pu4_buffer;
     UWORD32 *pu4_bitstrm_ofst = &ps_bitstrm->u4_ofst;
@@ -663,7 +663,7 @@ WORD32 isvcd_parse_bmb_cavlc(svc_dec_lyr_struct_t *ps_svc_lyr_dec, dec_mb_info_t
     if(u1_mb_type != B_DIRECT)
     {
         ret = isvcd_parse_bmb_non_direct_cavlc(ps_svc_lyr_dec, ps_cur_mb_info, ps_svc_cur_mb_info,
-                                               u1_mb_num, u1_num_mbsNby2);
+                                               u4_mb_num, u4_num_mbsNby2);
         if(ret != OK) return ret;
     }
     else
@@ -803,15 +803,15 @@ WORD32 isvcd_parse_bmb_cavlc(svc_dec_lyr_struct_t *ps_svc_lyr_dec, dec_mb_info_t
 
 WORD32 isvcd_parse_bmb_non_direct_cabac(svc_dec_lyr_struct_t *ps_svc_lyr_dec,
                                         dec_mb_info_t *ps_cur_mb_info,
-                                        dec_svc_mb_info_t *ps_svc_cur_mb_info, UWORD8 u1_mb_num,
-                                        UWORD8 u1_num_mbsNby2)
+                                        dec_svc_mb_info_t *ps_svc_cur_mb_info, UWORD32 u4_mb_num,
+                                        UWORD32 u4_num_mbsNby2)
 {
     /* Loads from ps_dec */
     dec_struct_t *ps_dec = &ps_svc_lyr_dec->s_dec;
     decoding_envirnoment_t *ps_cab_env = &ps_dec->s_cab_dec_env;
     dec_bit_stream_t *ps_bitstrm = ps_dec->ps_bitstrm;
     ctxt_inc_mb_info_t *p_curr_ctxt = ps_dec->ps_curr_ctxt_mb_info;
-    parse_pmbarams_t *ps_parse_mb_data = ps_dec->ps_parse_mb_data + u1_num_mbsNby2;
+    parse_pmbarams_t *ps_parse_mb_data = ps_dec->ps_parse_mb_data + u4_num_mbsNby2;
 
     /* table pointer loads */
     const UWORD8 *pu1_sub_mb_pred_modes = (UWORD8 *) (gau1_ih264d_submb_pred_modes) + 4;
@@ -1007,7 +1007,7 @@ WORD32 isvcd_parse_bmb_non_direct_cabac(svc_dec_lyr_struct_t *ps_svc_lyr_dec,
         UWORD8 u1_p_idx = 0;
         UWORD8 u1_num_submb_part;
         parse_part_params_t *ps_part;
-        mv_pred_t *ps_mv_start = ps_dec->ps_mv_cur + (u1_mb_num << 4);
+        mv_pred_t *ps_mv_start = ps_dec->ps_mv_cur + (u4_mb_num << 4);
         ps_part = ps_dec->ps_part;
 
         /* Default initialization for non subMb case */
@@ -1092,8 +1092,8 @@ WORD32 isvcd_parse_bmb_non_direct_cabac(svc_dec_lyr_struct_t *ps_svc_lyr_dec,
 */
 WORD32 isvcd_parse_bmb_non_direct_cavlc(svc_dec_lyr_struct_t *ps_svc_lyr_dec,
                                         dec_mb_info_t *ps_cur_mb_info,
-                                        dec_svc_mb_info_t *ps_svc_cur_mb_info, UWORD8 u1_mb_num,
-                                        UWORD8 u1_num_mbsNby2)
+                                        dec_svc_mb_info_t *ps_svc_cur_mb_info, UWORD32 u4_mb_num,
+                                        UWORD32 u4_num_mbsNby2)
 {
     dec_struct_t *ps_dec = &ps_svc_lyr_dec->s_dec;
     dec_bit_stream_t *ps_bitstrm = ps_dec->ps_bitstrm;
@@ -1103,7 +1103,7 @@ WORD32 isvcd_parse_bmb_non_direct_cavlc(svc_dec_lyr_struct_t *ps_svc_lyr_dec,
     const UWORD8(*pu1_mb_pred_modes)[32] = (const UWORD8(*)[32]) gau1_ih264d_mb_pred_modes;
     const UWORD8 *pu1_num_mb_part = (const UWORD8 *) gau1_ih264d_num_mb_part;
     const UWORD8 *pu1_sub_mb_mc_mode = (const UWORD8 *) (gau1_ih264d_submb_mc_mode) + 4;
-    parse_pmbarams_t *ps_parse_mb_data = ps_dec->ps_parse_mb_data + u1_num_mbsNby2;
+    parse_pmbarams_t *ps_parse_mb_data = ps_dec->ps_parse_mb_data + u4_num_mbsNby2;
     UWORD8 *pu1_col_info = ps_parse_mb_data->u1_col_info;
     WORD8(*pi1_ref_idx)[MAX_REFIDX_INFO_PER_MB] = ps_parse_mb_data->i1_ref_idx;
     UWORD8 u1_mb_type = ps_cur_mb_info->u1_mb_type;
@@ -1287,7 +1287,7 @@ WORD32 isvcd_parse_bmb_non_direct_cavlc(svc_dec_lyr_struct_t *ps_svc_lyr_dec,
         const UWORD8 *pu1_mb_parth = (const UWORD8 *) gau1_ih264d_mb_parth;
         UWORD8 u1_p_idx = 0, u1_num_submb_part, uc_lx;
         parse_part_params_t *ps_part;
-        mv_pred_t *ps_mv_start = ps_dec->ps_mv_cur + (u1_mb_num << 4);
+        mv_pred_t *ps_mv_start = ps_dec->ps_mv_cur + (u4_mb_num << 4);
         UWORD8 u1_mb_part_wd, u1_mb_part_ht;
 
         ps_part = ps_dec->ps_part;
