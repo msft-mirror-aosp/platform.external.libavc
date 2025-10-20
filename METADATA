@@ -8,12 +8,12 @@ third_party {
   license_type: NOTICE
   last_upgrade_date {
     year: 2025
-    month: 7
-    day: 30
+    month: 8
+    day: 20
   }
   identifier {
     type: "Git"
     value: "https://github.com/ittiam-systems/libavc.git"
-    version: "v1.7.2"
+    version: "v1.8.1"
   }
 }

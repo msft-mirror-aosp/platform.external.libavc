@@ -82,6 +82,7 @@ WORD32 ih264d_init_dec_mb_grp(dec_struct_t *ps_dec);
 */
 WORD16 isvcd_free_dynamic_bufs(svc_dec_lyr_struct_t *ps_svc_lyr_dec)
 {
+    WORD32 i;
     dec_struct_t *ps_dec = &ps_svc_lyr_dec->s_dec;
     /* Free any avc dynamic buffers that are allocated */
     ih264d_free_dynamic_bufs(ps_dec);
@@ -93,6 +94,12 @@ WORD16 isvcd_free_dynamic_bufs(svc_dec_lyr_struct_t *ps_svc_lyr_dec)
     PS_DEC_ALIGNED_FREE(ps_dec, ps_svc_lyr_dec->ps_svc_frm_mb_info);
     PS_DEC_ALIGNED_FREE(ps_dec, ps_svc_lyr_dec->pu2_frm_res_luma_csbp);
     PS_DEC_ALIGNED_FREE(ps_dec, ps_svc_lyr_dec->pu1_svc_base_mode_flag);
+
+    memset(ps_dec->ps_pic_buf_base, 0, sizeof(struct pic_buffer_t) * (H264_MAX_REF_PICS * 2));
+    for(i = 0; i < MAX_DISP_BUFS_NEW; i++)
+    {
+        ps_dec->apv_buf_id_pic_buf_map[i] = NULL;
+    }
     return 0;
 }
 
@@ -117,7 +124,7 @@ WORD16 isvcd_allocate_dynamic_bufs(svc_dec_lyr_struct_t *ps_svc_lyr_dec)
     WORD16 i16_status = 0;
     UWORD8 uc_frmOrFld = (1 - ps_dec->ps_cur_sps->u1_frame_mbs_only_flag);
     dec_seq_params_t *ps_sps = ps_dec->ps_cur_sps;
-    UWORD32 u4_total_mbs = ps_sps->u2_total_num_of_mbs << uc_frmOrFld;
+    UWORD32 u4_total_mbs = ps_sps->u4_total_num_of_mbs << uc_frmOrFld;
     WORD32 size;
     void *pv_buf;
     void *pv_mem_ctxt = ps_dec->pv_mem_ctxt;
@@ -735,6 +742,49 @@ WORD32 isvcd_decode_gaps_in_frame_num(dec_struct_t *ps_dec, UWORD16 u2_frame_num
 }
 
 /*!
+****************************************************************************
+*                                                                           
+*  \if Function name : isvcd_init_dpb_ref_bufs \endif
+*
+*  \brief
+*    Initializes the reference buffers
+*
+*  \return
+*    None
+*
+*  \note
+*    This function is called to initialize the reference buffers.
+****************************************************************************
+*/
+
+void isvcd_init_dpb_ref_bufs(dec_struct_t *ps_dec)
+{
+    UWORD8 i;
+    struct pic_buffer_t *ps_init_dpb;
+    ps_init_dpb = ps_dec->ps_dpb_mgr->ps_init_dpb[0][0];
+    for(i = 0; i < 2 * MAX_REF_BUFS; i++)
+    {
+        memset(ps_init_dpb, 0, sizeof(struct pic_buffer_t));
+        ps_init_dpb->pu1_buf1 = NULL;
+        ps_init_dpb->u1_long_term_frm_idx = MAX_REF_BUFS + 1;
+        ps_dec->ps_dpb_mgr->ps_init_dpb[0][i] = ps_init_dpb;
+        ps_dec->ps_dpb_mgr->ps_mod_dpb[0][i] = ps_init_dpb;
+        ps_init_dpb++;
+    }
+
+    ps_init_dpb = ps_dec->ps_dpb_mgr->ps_init_dpb[1][0];
+    for(i = 0; i < 2 * MAX_REF_BUFS; i++)
+    {
+        memset(ps_init_dpb, 0, sizeof(struct pic_buffer_t));
+        ps_init_dpb->pu1_buf1 = NULL;
+        ps_init_dpb->u1_long_term_frm_idx = MAX_REF_BUFS + 1;
+        ps_dec->ps_dpb_mgr->ps_init_dpb[1][i] = ps_init_dpb;
+        ps_dec->ps_dpb_mgr->ps_mod_dpb[1][i] = ps_init_dpb;
+        ps_init_dpb++;
+    }
+}
+
+/*!
 **************************************************************************
 * \if Function name : isvcd_init_pic \endif
 *
@@ -773,9 +823,9 @@ WORD32 isvcd_init_pic(svc_dec_lyr_struct_t *ps_svc_lyr_dec, UWORD16 u2_frame_num
     /*--------------------------------------------------------------------*/
     /* Get the value of MaxMbAddress and frmheight in Mbs                 */
     /*--------------------------------------------------------------------*/
-    ps_seq->u2_max_mb_addr =
-        (ps_seq->u2_frm_wd_in_mbs *
-         (ps_dec->u2_pic_ht >> (4 + ps_dec->ps_cur_slice->u1_field_pic_flag))) -
+    ps_seq->u4_max_mb_addr =
+        ((UWORD32)ps_seq->u2_frm_wd_in_mbs *
+         ((UWORD32)ps_dec->u2_pic_ht >> (4 + ps_dec->ps_cur_slice->u1_field_pic_flag))) -
         1;
     ps_dec->u2_frm_ht_in_mbs = (ps_dec->u2_pic_ht >> (4 + ps_dec->ps_cur_slice->u1_field_pic_flag));
 
@@ -849,6 +899,9 @@ WORD32 isvcd_init_pic(svc_dec_lyr_struct_t *ps_svc_lyr_dec, UWORD16 u2_frame_num
             ps_dec->i4_error_code = IVD_MEM_ALLOC_FAILED;
             return IVD_MEM_ALLOC_FAILED;
         }
+
+        ih264d_init_ref_bufs((dpb_manager_t *)ps_dec->ps_dpb_mgr);
+        isvcd_init_dpb_ref_bufs(ps_dec);
 
         ret = ih264d_create_pic_buffers(ps_dec->u1_pic_bufs, ps_dec);
         if(ret != OK) return ret;
